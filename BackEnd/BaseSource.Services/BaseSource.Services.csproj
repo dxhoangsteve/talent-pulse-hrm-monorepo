@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
+    <PackageReference Include="Mailjet.Api" Version="3.0.0" />
+    <PackageReference Include="UnitOfWork.EntityFrameworkCore" Version="6.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="BackgroundServices\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BaseSource.Data\BaseSource.Data.csproj" />
+    <ProjectReference Include="..\BaseSource.Shared\BaseSource.Shared.csproj" />
+    <ProjectReference Include="..\BaseSource.ViewModels\BaseSource.ViewModels.csproj" />
+  </ItemGroup>
+
+</Project>
