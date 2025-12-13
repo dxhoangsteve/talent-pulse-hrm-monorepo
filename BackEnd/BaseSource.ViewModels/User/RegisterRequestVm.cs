@@ -32,5 +32,14 @@ namespace BaseSource.ViewModels.User
         [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không đúng, vui lòng kiểm tra lại")]
         public string ConfirmPassword { get; set; }
 
+        [Required(ErrorMessage = "Lương cơ bản không được để trống")]
+        [Range(0, double.MaxValue, ErrorMessage = "Lương cơ bản phải lớn hơn hoặc bằng 0")]
+        public decimal BaseSalary { get; set; }
+
+        /// <summary>
+        /// Phòng ban (tùy chọn - nhân viên có thể không thuộc phòng ban nào)
+        /// </summary>
+        public Guid? DepartmentId { get; set; }
+
     }
 }
