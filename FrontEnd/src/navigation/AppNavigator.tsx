@@ -10,6 +10,7 @@ import { Colors } from '../constants/theme';
 import LoginScreen from '../screens/LoginScreen';
 import AdminDashboard from '../screens/AdminDashboard';
 import EmployeeDashboard from '../screens/EmployeeDashboard';
+import ManagerDashboard from '../screens/ManagerDashboard';
 import UserManagementScreen from '../screens/UserManagementScreen';
 import LeaveRequestScreen from '../screens/LeaveRequestScreen';
 import OTRequestScreen from '../screens/OTRequestScreen';
@@ -19,7 +20,7 @@ import DepartmentManagementScreen from '../screens/DepartmentManagementScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
-  const { token, isLoading, isAdmin } = useAuth();
+  const { token, isLoading, isAdmin, isManager } = useAuth();
 
   if (isLoading) {
     return (
@@ -43,6 +44,11 @@ export default function AppNavigator() {
             <Stack.Screen name="ApprovalScreen" component={ApprovalScreen} />
             <Stack.Screen name="DepartmentManagement" component={DepartmentManagementScreen} />
           </>
+        ) : isManager ? (
+          <>
+            <Stack.Screen name="ManagerDashboard" component={ManagerDashboard} />
+            <Stack.Screen name="ApprovalScreen" component={ApprovalScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="EmployeeDashboard" component={EmployeeDashboard} />
@@ -54,6 +60,7 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
 
 
 

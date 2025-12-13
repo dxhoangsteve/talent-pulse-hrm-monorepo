@@ -9,6 +9,9 @@ export type RootStackParamList = {
   OTRequest: undefined;
   ApprovalScreen: undefined;
   DepartmentManagement: undefined;
+  ManagerDashboard: undefined;
+  DepartmentEmployees: undefined;
+  DepartmentSalary: undefined;
 };
 
 export interface DecodedToken {

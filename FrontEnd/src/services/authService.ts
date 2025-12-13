@@ -70,5 +70,14 @@ export const authService = {
   isAdmin: (decoded: DecodedToken): boolean => {
       const role = authService.extractRole(decoded);
       return role === 'Admin' || role === 'SuperAdmin';
+  },
+
+  isManager: (decoded: DecodedToken): boolean => {
+      const roleClaim = decoded.role || 
+                       (decoded as any)['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      if (!roleClaim) return false;
+      const roles = Array.isArray(roleClaim) ? roleClaim : roleClaim.split(';');
+      return roles.includes('Manager') || roles.includes('DeputyManager');
   }
 };
+

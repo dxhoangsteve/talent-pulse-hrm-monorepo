@@ -7,6 +7,7 @@ interface AuthContextData {
   user: DecodedToken | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isManager: boolean;
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -55,12 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const isAdmin = user ? authService.isAdmin(user) : false;
+  
+  // Check if user is Manager or DeputyManager
+  const isManager = user ? authService.isManager(user) : false;
 
   return (
-    <AuthContext.Provider value={{ token, user, isLoading, isAdmin, login, logout }}>
+    <AuthContext.Provider value={{ token, user, isLoading, isAdmin, isManager, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
+

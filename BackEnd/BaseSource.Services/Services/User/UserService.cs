@@ -326,6 +326,43 @@ namespace BaseSouce.Services.Services.User
             return new ApiSuccessResult<PagedResult<UserVm>>(pagedResult);
         }
 
+        public async Task<ApiResult<List<UserVm>>> GetDepartmentUsersAsync(Guid departmentId)
+        {
+            try
+            {
+                var users = await _context.Users
+                    .AsNoTracking()
+                    .Where(u => u.DepartmentId == departmentId && u.IsActive)
+                    .Include(u => u.Department)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
+
+                var data = new List<UserVm>();
+                foreach (var user in users)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    data.Add(new UserVm
+                    {
+                        Id = user.Id,
+                        FullName = user.FullName ?? user.UserName ?? "",
+                        Email = user.Email ?? "",
+                        PhoneNumber = user.PhoneNumber,
+                        DepartmentName = user.Department?.Name,
+                        Position = user.Position.ToString(),
+                        Roles = roles.ToList(),
+                        IsActive = user.IsActive,
+                        CreatedTime = user.CreatedTime
+                    });
+                }
+
+                return new ApiSuccessResult<List<UserVm>>(data);
+            }
+            catch (Exception ex)
+            {
+                return new ApiErrorResult<List<UserVm>>($"Lỗi: {ex.Message}");
+            }
+        }
+
         #region Private Methods
         private async Task<string> GenerateJwtToken(AppUser user)
         {

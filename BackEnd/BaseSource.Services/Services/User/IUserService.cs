@@ -18,6 +18,10 @@ namespace BaseSouce.Services.Services.User
         Task<KeyValuePair<bool, string>> SetPasswordAsync(string userId, string newPassword);
         Task<ApiResult<PagedResult<UserVm>>> GetUsersPagingAsync(GetUserPagingRequest request);
 
-
+        /// <summary>
+        /// Lấy danh sách nhân viên theo phòng ban (Manager/Deputy xem phòng ban mình)
+        /// </summary>
+        Task<ApiResult<List<UserVm>>> GetDepartmentUsersAsync(Guid departmentId);
     }
 }
+
