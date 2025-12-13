@@ -10,19 +10,29 @@ namespace BaseSource.Data.Configurations
         {
             builder.ToTable("Salaries");
             builder.HasKey(x => x.Id);
+            builder.Property(x => x.Id).HasMaxLength(128);
+            
+            builder.Property(x => x.Status).HasConversion<byte>();
             builder.Property(x => x.BaseSalary).HasPrecision(18, 2);
             builder.Property(x => x.OvertimePay).HasPrecision(18, 2);
             builder.Property(x => x.Bonus).HasPrecision(18, 2);
+            builder.Property(x => x.Allowance).HasPrecision(18, 2);
             builder.Property(x => x.Deductions).HasPrecision(18, 2);
+            builder.Property(x => x.Insurance).HasPrecision(18, 2);
+            builder.Property(x => x.Tax).HasPrecision(18, 2);
             builder.Property(x => x.NetSalary).HasPrecision(18, 2);
-            builder.Property(x => x.Status).IsRequired().HasMaxLength(20);
+            builder.Property(x => x.ActualWorkDays).HasPrecision(5, 2);
+            builder.Property(x => x.Note).HasMaxLength(500);
+            builder.Property(x => x.ApprovedBy).HasMaxLength(128);
 
             builder.HasOne(x => x.Employee)
                 .WithMany(e => e.Salaries)
                 .HasForeignKey(x => x.EmployeeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Unique per employee per month per year
             builder.HasIndex(x => new { x.EmployeeId, x.Month, x.Year }).IsUnique();
+            builder.HasIndex(x => x.Status);
         }
     }
 }

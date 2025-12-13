@@ -10,9 +10,15 @@ namespace BaseSource.Data.Configurations
         {
             builder.ToTable("AppUsers");
             builder.Property(x => x.Id).HasMaxLength(128).ValueGeneratedOnAdd();
-            builder.Property(x => x.LinkFB).HasMaxLength(500);
-            builder.Property(x => x.TelegramAPI).HasMaxLength(500);
-            builder.Property(x => x.LinkTelegram).HasMaxLength(500);
+            builder.Property(x => x.FullName).IsRequired().HasMaxLength(150);
+            builder.Property(x => x.Avatar).HasMaxLength(500);
+            builder.Property(x => x.IsActive).HasDefaultValue(true);
+
+            // 1:1 with Employee
+            builder.HasOne(x => x.Employee)
+                .WithOne(e => e.User)
+                .HasForeignKey<Employee>(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Each User can have many UserClaims
             builder.HasMany(e => e.Claims)
