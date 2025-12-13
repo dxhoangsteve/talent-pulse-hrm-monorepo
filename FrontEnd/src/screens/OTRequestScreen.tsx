@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
-import { ArrowLeft, Plus, Clock, X } from 'lucide-react-native';
+import { ArrowLeft, Plus, Clock, X, Calendar } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, OTRequestItem, RequestStatus, getStatusLabel } from '../types/types';
 import { overtimeRequestService } from '../services/overtimeRequestService';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OTRequest'>;
 
@@ -16,11 +17,16 @@ export default function OTRequestScreen({ navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   // Form state
-  const [otDate, setOtDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [otDate, setOtDate] = useState<Date>(new Date());
+  const [startTime, setStartTime] = useState<Date>(new Date());
+  const [endTime, setEndTime] = useState<Date>(new Date());
   const [multiplier, setMultiplier] = useState('1.5');
   const [reason, setReason] = useState('');
+
+  // Picker state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -35,17 +41,33 @@ export default function OTRequestScreen({ navigation }: Props) {
     setLoading(false);
   };
 
+  const formatDateForApi = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const formatTimeForApi = (date: Date): string => {
+    return date.toTimeString().split(' ')[0]; // Returns HH:mm:ss
+  };
+
+  const formatDateDisplay = (date: Date): string => {
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const formatTimeDisplay = (date: Date): string => {
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  };
+
   const handleSubmit = async () => {
-    if (!otDate || !startTime || !endTime) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ ngày và giờ OT');
+    if (endTime <= startTime) {
+      Alert.alert('Lỗi', 'Giờ kết thúc phải sau giờ bắt đầu');
       return;
     }
 
     setSubmitting(true);
     const result = await overtimeRequestService.createRequest({
-      otDate,
-      startTime,
-      endTime,
+      otDate: formatDateForApi(otDate),
+      startTime: formatTimeForApi(startTime),
+      endTime: formatTimeForApi(endTime),
       multiplier: parseFloat(multiplier),
       reason: reason || undefined,
     });
@@ -80,9 +102,9 @@ export default function OTRequestScreen({ navigation }: Props) {
   };
 
   const resetForm = () => {
-    setOtDate('');
-    setStartTime('');
-    setEndTime('');
+    setOtDate(new Date());
+    setStartTime(new Date());
+    setEndTime(new Date());
     setMultiplier('1.5');
     setReason('');
   };
@@ -97,10 +119,31 @@ export default function OTRequestScreen({ navigation }: Props) {
   };
 
   const multipliers = [
-    { value: '1.5', label: '1.5x' },
-    { value: '2', label: '2x (CN)' },
+    { value: '1.5', label: '1.5x (Thường)' },
+    { value: '2', label: '2x (Cuối tuần)' },
     { value: '3', label: '3x (Lễ)' },
   ];
+
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setOtDate(selectedDate);
+    }
+  };
+
+  const onStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    setShowStartTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      setStartTime(selectedTime);
+    }
+  };
+
+  const onEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    setShowEndTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      setEndTime(selectedTime);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -127,31 +170,52 @@ export default function OTRequestScreen({ navigation }: Props) {
             </View>
 
             <ScrollView style={styles.formContent}>
-              {/* OT Date */}
-              <Text style={styles.inputLabel}>Ngày OT (yyyy-mm-dd)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="2024-12-15"
-                value={otDate}
-                onChangeText={setOtDate}
-              />
+              {/* OT Date Picker */}
+              <Text style={styles.inputLabel}>Ngày OT</Text>
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowDatePicker(true)}>
+                <Calendar size={20} color={Colors.primary} />
+                <Text style={styles.datePickerText}>{formatDateDisplay(otDate)}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={otDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onDateChange}
+                />
+              )}
 
-              {/* Time */}
-              <Text style={styles.inputLabel}>Giờ bắt đầu (HH:mm:ss)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="18:00:00"
-                value={startTime}
-                onChangeText={setStartTime}
-              />
+              {/* Start Time Picker */}
+              <Text style={styles.inputLabel}>Giờ bắt đầu</Text>
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowStartTimePicker(true)}>
+                <Clock size={20} color={Colors.secondary} />
+                <Text style={styles.datePickerText}>{formatTimeDisplay(startTime)}</Text>
+              </TouchableOpacity>
+              {showStartTimePicker && (
+                <DateTimePicker
+                  value={startTime}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onStartTimeChange}
+                />
+              )}
 
-              <Text style={styles.inputLabel}>Giờ kết thúc (HH:mm:ss)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="21:00:00"
-                value={endTime}
-                onChangeText={setEndTime}
-              />
+              {/* End Time Picker */}
+              <Text style={styles.inputLabel}>Giờ kết thúc</Text>
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowEndTimePicker(true)}>
+                <Clock size={20} color={Colors.secondary} />
+                <Text style={styles.datePickerText}>{formatTimeDisplay(endTime)}</Text>
+              </TouchableOpacity>
+              {showEndTimePicker && (
+                <DateTimePicker
+                  value={endTime}
+                  mode="time"
+                  is24Hour={true}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onEndTimeChange}
+                />
+              )}
 
               {/* Multiplier */}
               <Text style={styles.inputLabel}>Hệ số OT</Text>
@@ -249,6 +313,7 @@ export default function OTRequestScreen({ navigation }: Props) {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
@@ -298,6 +363,17 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   textArea: { height: 80, textAlignVertical: 'top' },
+  datePickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.sm,
+  },
+  datePickerText: { fontSize: FontSize.md, color: Colors.text },
   typeContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   typeBtn: {
     paddingVertical: Spacing.sm,

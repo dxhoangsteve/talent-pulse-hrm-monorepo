@@ -23,6 +23,7 @@ namespace BaseSource.Data.EF
         
         // Payroll
         public DbSet<Salary> Salaries { get; set; }
+        public DbSet<SalaryComplaint> SalaryComplaints { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

@@ -26,6 +26,21 @@ namespace BaseSource.Services.Services.Department
         /// Trả về null nếu user không quản lý phòng ban nào
         /// </summary>
         Task<Guid?> GetManagedDepartmentIdAsync(string userId);
+
+        /// <summary>
+        /// Lấy danh sách nhân viên trong phòng ban
+        /// </summary>
+        Task<ApiResult<List<UserSelectVm>>> GetDepartmentEmployeesAsync(Guid departmentId);
+
+        /// <summary>
+        /// Thêm nhân viên vào phòng ban
+        /// </summary>
+        Task<ApiResult<bool>> AddEmployeeToDepartmentAsync(Guid departmentId, string employeeId);
+
+        /// <summary>
+        /// Xóa nhân viên khỏi phòng ban
+        /// </summary>
+        Task<ApiResult<bool>> RemoveEmployeeFromDepartmentAsync(Guid departmentId, string employeeId);
     }
 
     /// <summary>

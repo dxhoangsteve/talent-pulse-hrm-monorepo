@@ -1,7 +1,10 @@
 // API Configuration
-export const API_BASE_URL = 'http://localhost:5000/api';
+// Thay đổi IP này thành IP của máy chạy Backend
+const LOCAL_IP = '192.168.1.13';
+const API_PORT = '5294';
 
-// You can change this to your actual backend URL
+export const API_BASE_URL = `http://${LOCAL_IP}:${API_PORT}/api`;
+
 // For production: 'https://your-api-domain.com/api'
-// For local development with Android emulator: 'http://10.0.2.2:5000/api'
-// For local development with iOS simulator: 'http://localhost:5000/api'
+// For Android emulator: use 'http://10.0.2.2:PORT/api'
+// For iOS simulator: use 'http://localhost:PORT/api'

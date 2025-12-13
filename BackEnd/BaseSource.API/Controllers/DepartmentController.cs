@@ -68,5 +68,51 @@ namespace BaseSource.API.Controllers
             var result = await _departmentService.GetAvailableLeadersAsync();
             return Ok(result);
         }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên trong phòng ban
+        /// </summary>
+        [HttpGet("{id}/employees")]
+        [Authorize(Roles = "SuperAdmin,Admin,Manager,DeputyManager")]
+        public async Task<IActionResult> GetDepartmentEmployees(Guid id)
+        {
+            var result = await _departmentService.GetDepartmentEmployeesAsync(id);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Thêm nhân viên vào phòng ban
+        /// </summary>
+        [HttpPost("{id}/employees")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> AddEmployeeToDepartment(Guid id, [FromBody] AddEmployeeToDeptRequest request)
+        {
+            var result = await _departmentService.AddEmployeeToDepartmentAsync(id, request.EmployeeId);
+            if (!result.IsSuccessed)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Xóa nhân viên khỏi phòng ban
+        /// </summary>
+        [HttpDelete("{id}/employees/{employeeId}")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> RemoveEmployeeFromDepartment(Guid id, string employeeId)
+        {
+            var result = await _departmentService.RemoveEmployeeFromDepartmentAsync(id, employeeId);
+            if (!result.IsSuccessed)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+    }
+
+    public class AddEmployeeToDeptRequest
+    {
+        public string EmployeeId { get; set; } = string.Empty;
     }
 }

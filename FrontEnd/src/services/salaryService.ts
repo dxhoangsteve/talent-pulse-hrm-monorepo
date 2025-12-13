@@ -30,6 +30,32 @@ export interface SalaryVm {
   createdTime: string;
 }
 
+export interface ComplaintVm {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  departmentName?: string;
+  month: number;
+  year: number;
+  complaintType: number;
+  complaintTypeName: string;
+  content: string;
+  status: number;
+  statusName: string;
+  resolvedByName?: string;
+  response?: string;
+  resolvedTime?: string;
+  createdTime: string;
+}
+
+export interface CreateComplaintRequest {
+  month: number;
+  year: number;
+  complaintType: number;
+  content: string;
+  salarySlipId?: string;
+}
+
 export const salaryService = {
   getMySalary: async (month?: number, year?: number): Promise<ApiResult<SalaryVm[]>> => {
     let url = '/salary/my';
@@ -63,5 +89,41 @@ export const salaryService = {
   getAllSalary: async (month: number, year: number): Promise<ApiResult<SalaryVm[]>> => {
     const response = await apiClient.get(`/salary?month=${month}&year=${year}`);
     return response.data;
+  },
+
+  updateSalary: async (id: string, data: { bonus?: number; deductions?: number; note?: string }): Promise<ApiResult<boolean>> => {
+    const response = await apiClient.put(`/salary/${id}`, data);
+    return response.data;
+  },
+
+  approveSalary: async (id: string): Promise<ApiResult<boolean>> => {
+    const response = await apiClient.post(`/salary/${id}/approve`);
+    return response.data;
+  },
+
+  paySalary: async (id: string, note?: string): Promise<ApiResult<boolean>> => {
+    const response = await apiClient.post(`/salary/${id}/pay`, { note });
+    return response.data;
+  },
+
+  // Complaint methods
+  createComplaint: async (data: CreateComplaintRequest): Promise<ApiResult<ComplaintVm>> => {
+    const response = await apiClient.post('/salary/complaints', data);
+    return response.data;
+  },
+
+  getMyComplaints: async (): Promise<ApiResult<ComplaintVm[]>> => {
+    const response = await apiClient.get('/salary/complaints/my');
+    return response.data;
+  },
+
+  getAllComplaints: async (): Promise<ApiResult<ComplaintVm[]>> => {
+    const response = await apiClient.get('/salary/complaints');
+    return response.data;
+  },
+
+  resolveComplaint: async (id: string, status: number, response?: string): Promise<ApiResult<boolean>> => {
+    const res = await apiClient.post(`/salary/complaints/${id}/resolve`, { status, response });
+    return res.data;
   },
 };

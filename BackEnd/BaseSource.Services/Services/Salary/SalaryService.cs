@@ -375,5 +375,223 @@ namespace BaseSource.Services.Services.Salary
                 _ => "N/A"
             };
         }
+
+        public async Task<ApiResult<bool>> UpdateSalaryAsync(string adminId, string salaryId, UpdateSalaryRequest request)
+        {
+            try
+            {
+                var salary = await _context.Salaries.FindAsync(salaryId);
+                if (salary == null)
+                {
+                    return new ApiResult<bool> { IsSuccessed = false, Message = "Không tìm thấy phiếu lương" };
+                }
+
+                if (salary.Status == SalaryStatus.Paid)
+                {
+                    return new ApiResult<bool> { IsSuccessed = false, Message = "Không thể sửa phiếu lương đã thanh toán" };
+                }
+
+                if (request.BaseSalary.HasValue) salary.BaseSalary = request.BaseSalary.Value;
+                if (request.OvertimePay.HasValue) salary.OvertimePay = request.OvertimePay.Value;
+                if (request.Bonus.HasValue) salary.Bonus = request.Bonus.Value;
+                if (request.Allowance.HasValue) salary.Allowance = request.Allowance.Value;
+                if (request.Deductions.HasValue) salary.Deductions = request.Deductions.Value;
+                if (!string.IsNullOrEmpty(request.Note)) salary.Note = request.Note;
+
+                // Recalculate net salary
+                decimal taxableIncome = salary.BaseSalary + salary.OvertimePay + salary.Bonus + salary.Allowance - salary.Deductions - salary.Insurance;
+                salary.Tax = CalculateTax(taxableIncome);
+                salary.NetSalary = Math.Max(0, taxableIncome - salary.Tax);
+                salary.UpdatedTime = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return new ApiResult<bool> { IsSuccessed = true, ResultObj = true };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<bool> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResult<ComplaintVm>> CreateComplaintAsync(string employeeId, CreateComplaintRequest request)
+        {
+            try
+            {
+                var employee = await _context.Employees
+                    .Include(e => e.Department)
+                    .FirstOrDefaultAsync(e => e.UserId == employeeId);
+
+                if (employee == null)
+                {
+                    return new ApiResult<ComplaintVm> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
+                }
+
+                // Check if complaint already exists for this month
+                var existing = await _context.SalaryComplaints
+                    .FirstOrDefaultAsync(c => c.EmployeeId == employeeId && c.Month == request.Month && c.Year == request.Year && c.Status == ComplaintStatus.Pending);
+
+                if (existing != null)
+                {
+                    return new ApiResult<ComplaintVm> { IsSuccessed = false, Message = "Bạn đã có khiếu nại đang chờ xử lý cho tháng này" };
+                }
+
+                var complaint = new Data.Entities.SalaryComplaint
+                {
+                    Id = Guid.NewGuid(),
+                    EmployeeId = employeeId,
+                    Month = request.Month,
+                    Year = request.Year,
+                    ComplaintType = request.ComplaintType,
+                    Content = request.Content,
+                    SalarySlipId = request.SalarySlipId,
+                    Status = ComplaintStatus.Pending,
+                    CreatedTime = DateTime.UtcNow
+                };
+
+                _context.SalaryComplaints.Add(complaint);
+                await _context.SaveChangesAsync();
+
+                return new ApiResult<ComplaintVm>
+                {
+                    IsSuccessed = true,
+                    ResultObj = MapComplaintToVm(complaint, employee.FullName, employee.Department?.Name)
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<ComplaintVm> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResult<List<ComplaintVm>>> GetMyComplaintsAsync(string employeeId)
+        {
+            try
+            {
+                var complaints = await _context.SalaryComplaints
+                    .Include(c => c.Employee)
+                        .ThenInclude(e => e!.Department)
+                    .Include(c => c.ResolvedBy)
+                    .Where(c => c.EmployeeId == employeeId)
+                    .OrderByDescending(c => c.CreatedTime)
+                    .ToListAsync();
+
+                var result = complaints.Select(c => MapComplaintToVm(
+                    c,
+                    c.Employee?.FullName ?? "N/A",
+                    c.Employee?.Department?.Name,
+                    c.ResolvedBy?.FullName
+                )).ToList();
+
+                return new ApiResult<List<ComplaintVm>> { IsSuccessed = true, ResultObj = result };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<List<ComplaintVm>> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResult<List<ComplaintVm>>> GetAllComplaintsAsync()
+        {
+            try
+            {
+                var complaints = await _context.SalaryComplaints
+                    .Include(c => c.Employee)
+                        .ThenInclude(e => e!.Department)
+                    .Include(c => c.ResolvedBy)
+                    .OrderByDescending(c => c.CreatedTime)
+                    .ToListAsync();
+
+                var result = complaints.Select(c => MapComplaintToVm(
+                    c,
+                    c.Employee?.FullName ?? "N/A",
+                    c.Employee?.Department?.Name,
+                    c.ResolvedBy?.FullName
+                )).ToList();
+
+                return new ApiResult<List<ComplaintVm>> { IsSuccessed = true, ResultObj = result };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<List<ComplaintVm>> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResult<bool>> ResolveComplaintAsync(string adminId, Guid complaintId, ResolveComplaintRequest request)
+        {
+            try
+            {
+                var complaint = await _context.SalaryComplaints.FindAsync(complaintId);
+                if (complaint == null)
+                {
+                    return new ApiResult<bool> { IsSuccessed = false, Message = "Không tìm thấy khiếu nại" };
+                }
+
+                if (complaint.Status != ComplaintStatus.Pending && complaint.Status != ComplaintStatus.InProgress)
+                {
+                    return new ApiResult<bool> { IsSuccessed = false, Message = "Khiếu nại đã được xử lý" };
+                }
+
+                complaint.Status = request.Status;
+                complaint.Response = request.Response;
+                complaint.ResolvedById = adminId;
+                complaint.ResolvedTime = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return new ApiResult<bool> { IsSuccessed = true, ResultObj = true };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<bool> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
+        private ComplaintVm MapComplaintToVm(Data.Entities.SalaryComplaint c, string employeeName, string? departmentName, string? resolvedByName = null)
+        {
+            return new ComplaintVm
+            {
+                Id = c.Id,
+                EmployeeId = c.EmployeeId,
+                EmployeeName = employeeName,
+                DepartmentName = departmentName,
+                Month = c.Month,
+                Year = c.Year,
+                ComplaintType = c.ComplaintType,
+                ComplaintTypeName = GetComplaintTypeName(c.ComplaintType),
+                Content = c.Content,
+                Status = c.Status,
+                StatusName = GetComplaintStatusName(c.Status),
+                ResolvedByName = resolvedByName,
+                Response = c.Response,
+                ResolvedTime = c.ResolvedTime,
+                CreatedTime = c.CreatedTime
+            };
+        }
+
+        private string GetComplaintTypeName(ComplaintType type)
+        {
+            return type switch
+            {
+                ComplaintType.NotPaid => "Chưa nhận lương",
+                ComplaintType.WrongAmount => "Sai số tiền",
+                ComplaintType.MissingOT => "Thiếu tiền OT",
+                ComplaintType.MissingBonus => "Thiếu tiền thưởng",
+                ComplaintType.Other => "Khác",
+                _ => "N/A"
+            };
+        }
+
+        private string GetComplaintStatusName(ComplaintStatus status)
+        {
+            return status switch
+            {
+                ComplaintStatus.Pending => "Chờ xử lý",
+                ComplaintStatus.InProgress => "Đang xử lý",
+                ComplaintStatus.Resolved => "Đã xử lý",
+                ComplaintStatus.Rejected => "Từ chối",
+                _ => "N/A"
+            };
+        }
     }
 }

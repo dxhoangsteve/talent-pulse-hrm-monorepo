@@ -219,6 +219,107 @@ namespace BaseSource.Services.Services.Department
 
             return null;
         }
+
+        /// <summary>
+        /// Lấy danh sách nhân viên trong phòng ban
+        /// </summary>
+        public async Task<ApiResult<List<UserSelectVm>>> GetDepartmentEmployeesAsync(Guid departmentId)
+        {
+            var employees = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.DepartmentId == departmentId && u.IsActive)
+                .OrderBy(u => u.FullName)
+                .Select(u => new UserSelectVm
+                {
+                    Id = u.Id,
+                    FullName = u.FullName ?? u.UserName ?? "N/A",
+                    Email = u.Email,
+                    CurrentDepartment = null
+                })
+                .ToListAsync();
+
+            return new ApiSuccessResult<List<UserSelectVm>>(employees);
+        }
+
+        /// <summary>
+        /// Thêm nhân viên vào phòng ban
+        /// </summary>
+        public async Task<ApiResult<bool>> AddEmployeeToDepartmentAsync(Guid departmentId, string employeeId)
+        {
+            try
+            {
+                var department = await _context.Departments.FindAsync(departmentId);
+                if (department == null)
+                {
+                    return new ApiErrorResult<bool>("Phòng ban không tồn tại");
+                }
+
+                var user = await _userManager.FindByIdAsync(employeeId);
+                if (user == null)
+                {
+                    return new ApiErrorResult<bool>("Nhân viên không tồn tại");
+                }
+
+                // Check if user is already in another department
+                if (user.DepartmentId != null && user.DepartmentId != departmentId)
+                {
+                    var oldDept = await _context.Departments.FindAsync(user.DepartmentId);
+                    return new ApiErrorResult<bool>($"Nhân viên đã thuộc phòng ban {oldDept?.Name}. Vui lòng xóa khỏi phòng ban cũ trước.");
+                }
+
+                user.DepartmentId = departmentId;
+                await _userManager.UpdateAsync(user);
+
+                return new ApiSuccessResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiErrorResult<bool>($"Lỗi: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Xóa nhân viên khỏi phòng ban
+        /// </summary>
+        public async Task<ApiResult<bool>> RemoveEmployeeFromDepartmentAsync(Guid departmentId, string employeeId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(employeeId);
+                if (user == null)
+                {
+                    return new ApiErrorResult<bool>("Nhân viên không tồn tại");
+                }
+
+                if (user.DepartmentId != departmentId)
+                {
+                    return new ApiErrorResult<bool>("Nhân viên không thuộc phòng ban này");
+                }
+
+                // Check if user is manager or deputy
+                var dept = await _context.Departments.FindAsync(departmentId);
+                if (dept != null)
+                {
+                    if (dept.ManagerId == employeeId)
+                    {
+                        return new ApiErrorResult<bool>("Không thể xóa Trưởng phòng. Vui lòng thay đổi Trưởng phòng trước.");
+                    }
+                    if (dept.DeputyId == employeeId)
+                    {
+                        return new ApiErrorResult<bool>("Không thể xóa Phó phòng. Vui lòng thay đổi Phó phòng trước.");
+                    }
+                }
+
+                user.DepartmentId = null;
+                user.Position = PositionType.None;
+                await _userManager.UpdateAsync(user);
+
+                return new ApiSuccessResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new ApiErrorResult<bool>($"Lỗi: {ex.Message}");
+            }
+        }
     }
 }
-

@@ -14,6 +14,8 @@ export type RootStackParamList = {
   DepartmentSalary: undefined;
   AttendanceScreen: undefined;
   AttendanceHistory: undefined;
+  MySalary: undefined;
+  SalaryManagement: undefined;
 };
 
 export interface DecodedToken {
@@ -30,6 +32,14 @@ export enum RequestStatus {
   Approved = 1,
   Rejected = 2,
   Cancelled = 3,
+}
+
+export enum SalaryStatus {
+  Draft = 0,
+  Pending = 1,
+  Approved = 2,
+  Paid = 3,
+  Cancelled = 4,
 }
 
 export enum LeaveType {

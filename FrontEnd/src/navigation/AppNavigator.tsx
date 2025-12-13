@@ -54,6 +54,8 @@ export default function AppNavigator() {
             <Stack.Screen name="ApprovalScreen" component={ApprovalScreen} />
             <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} />
             <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+            <Stack.Screen name="LeaveRequest" component={LeaveRequestScreen} />
+            <Stack.Screen name="OTRequest" component={OTRequestScreen} />
           </>
         ) : (
           <>

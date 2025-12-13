@@ -102,5 +102,77 @@ export const departmentService = {
       return { isSuccessed: false, message: 'Không thể cập nhật lãnh đạo phòng ban' };
     }
   },
-};
 
+  // Get employees in a department
+  getDepartmentEmployees: async (departmentId: string): Promise<ApiResult<UserOption[]>> => {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${API_CONFIG.API_URL}/Department/${departmentId}/employees`, {
+        method: 'GET',
+        headers,
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Get department employees error:', error);
+      return { isSuccessed: false, message: 'Không thể tải danh sách nhân viên' };
+    }
+  },
+
+  // Get all employees for assigning to department
+  getAvailableEmployees: async (): Promise<ApiResult<UserOption[]>> => {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${API_CONFIG.API_URL}/Account/users?pageSize=1000`, {
+        method: 'GET',
+        headers,
+      });
+      const data = await response.json();
+      if (data.isSuccessed && data.resultObj && data.resultObj.items) {
+        return { 
+          isSuccessed: true, 
+          resultObj: data.resultObj.items.map((u: any) => ({
+            id: u.id,
+            fullName: u.fullName,
+            email: u.email,
+            currentDepartment: u.departmentName
+          }))
+        };
+      }
+      return data;
+    } catch (error) {
+      console.error('Get available employees error:', error);
+      return { isSuccessed: false, message: 'Không thể tải danh sách nhân viên' };
+    }
+  },
+
+  // Add employee to department
+  addEmployeeToDepartment: async (departmentId: string, employeeId: string): Promise<ApiResult<boolean>> => {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${API_CONFIG.API_URL}/Department/${departmentId}/employees`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ employeeId }),
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Add employee error:', error);
+      return { isSuccessed: false, message: 'Không thể thêm nhân viên vào phòng ban' };
+    }
+  },
+
+  // Remove employee from department
+  removeEmployeeFromDepartment: async (departmentId: string, employeeId: string): Promise<ApiResult<boolean>> => {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${API_CONFIG.API_URL}/Department/${departmentId}/employees/${employeeId}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Remove employee error:', error);
+      return { isSuccessed: false, message: 'Không thể xóa nhân viên khỏi phòng ban' };
+    }
+  },
+};

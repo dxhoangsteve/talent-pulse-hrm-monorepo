@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
 import { ArrowLeft, Plus, Calendar, X, Check, Clock } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, LeaveRequestItem, LeaveType, RequestStatus, getStatusLabel, getLeaveTypeLabel } from '../types/types';
 import { leaveRequestService } from '../services/leaveRequestService';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'LeaveRequest'>;
 
@@ -17,9 +18,13 @@ export default function LeaveRequestScreen({ navigation }: Props) {
 
   // Form state
   const [leaveType, setLeaveType] = useState<LeaveType>(LeaveType.Annual);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [reason, setReason] = useState('');
+
+  // Date picker state
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -34,17 +39,25 @@ export default function LeaveRequestScreen({ navigation }: Props) {
     setLoading(false);
   };
 
+  const formatDateForApi = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const formatDateDisplay = (date: Date): string => {
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
   const handleSubmit = async () => {
-    if (!startDate || !endDate) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ ngày bắt đầu và kết thúc');
+    if (endDate < startDate) {
+      Alert.alert('Lỗi', 'Ngày kết thúc phải sau ngày bắt đầu');
       return;
     }
 
     setSubmitting(true);
     const result = await leaveRequestService.createRequest({
       leaveType,
-      startDate,
-      endDate,
+      startDate: formatDateForApi(startDate),
+      endDate: formatDateForApi(endDate),
       reason: reason || undefined,
     });
 
@@ -79,8 +92,8 @@ export default function LeaveRequestScreen({ navigation }: Props) {
 
   const resetForm = () => {
     setLeaveType(LeaveType.Annual);
-    setStartDate('');
-    setEndDate('');
+    setStartDate(new Date());
+    setEndDate(new Date());
     setReason('');
   };
 
@@ -100,6 +113,23 @@ export default function LeaveRequestScreen({ navigation }: Props) {
     { value: LeaveType.Compensatory, label: 'Nghỉ bù' },
     { value: LeaveType.Other, label: 'Khác' },
   ];
+
+  const onStartDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowStartPicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setStartDate(selectedDate);
+      if (selectedDate > endDate) {
+        setEndDate(selectedDate);
+      }
+    }
+  };
+
+  const onEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowEndPicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -142,22 +172,37 @@ export default function LeaveRequestScreen({ navigation }: Props) {
                 ))}
               </View>
 
-              {/* Dates */}
-              <Text style={styles.inputLabel}>Ngày bắt đầu (yyyy-mm-dd)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="2024-12-15"
-                value={startDate}
-                onChangeText={setStartDate}
-              />
+              {/* Start Date Picker */}
+              <Text style={styles.inputLabel}>Ngày bắt đầu</Text>
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowStartPicker(true)}>
+                <Calendar size={20} color={Colors.primary} />
+                <Text style={styles.datePickerText}>{formatDateDisplay(startDate)}</Text>
+              </TouchableOpacity>
+              {showStartPicker && (
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onStartDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
 
-              <Text style={styles.inputLabel}>Ngày kết thúc (yyyy-mm-dd)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="2024-12-16"
-                value={endDate}
-                onChangeText={setEndDate}
-              />
+              {/* End Date Picker */}
+              <Text style={styles.inputLabel}>Ngày kết thúc</Text>
+              <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowEndPicker(true)}>
+                <Calendar size={20} color={Colors.primary} />
+                <Text style={styles.datePickerText}>{formatDateDisplay(endDate)}</Text>
+              </TouchableOpacity>
+              {showEndPicker && (
+                <DateTimePicker
+                  value={endDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onEndDateChange}
+                  minimumDate={startDate}
+                />
+              )}
 
               {/* Reason */}
               <Text style={styles.inputLabel}>Lý do (không bắt buộc)</Text>
@@ -235,6 +280,7 @@ export default function LeaveRequestScreen({ navigation }: Props) {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
@@ -284,6 +330,17 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   textArea: { height: 80, textAlignVertical: 'top' },
+  datePickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.sm,
+  },
+  datePickerText: { fontSize: FontSize.md, color: Colors.text },
   typeContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   typeBtn: {
     paddingVertical: Spacing.sm,

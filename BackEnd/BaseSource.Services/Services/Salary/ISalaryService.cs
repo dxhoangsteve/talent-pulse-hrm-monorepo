@@ -25,6 +25,21 @@ namespace BaseSource.Services.Services.Salary
         
         /// <summary>Xem lịch sử phát lương</summary>
         Task<ApiResult<List<SalaryVm>>> GetPaymentHistoryAsync(SalaryHistoryQuery query);
+
+        /// <summary>Cập nhật thông tin lương (Admin)</summary>
+        Task<ApiResult<bool>> UpdateSalaryAsync(string adminId, string salaryId, UpdateSalaryRequest request);
+
+        // Complaint methods
+        /// <summary>Tạo khiếu nại lương (Employee)</summary>
+        Task<ApiResult<ComplaintVm>> CreateComplaintAsync(string employeeId, CreateComplaintRequest request);
+        
+        /// <summary>Lấy khiếu nại của mình (Employee)</summary>
+        Task<ApiResult<List<ComplaintVm>>> GetMyComplaintsAsync(string employeeId);
+        
+        /// <summary>Lấy tất cả khiếu nại (Admin)</summary>
+        Task<ApiResult<List<ComplaintVm>>> GetAllComplaintsAsync();
+        
+        /// <summary>Xử lý khiếu nại (Admin)</summary>
+        Task<ApiResult<bool>> ResolveComplaintAsync(string adminId, Guid complaintId, ResolveComplaintRequest request);
     }
 }
-

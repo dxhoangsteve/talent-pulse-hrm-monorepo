@@ -106,6 +106,60 @@ namespace BaseSource.API.Controllers
             var result = await _salaryService.GetPaymentHistoryAsync(query);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Cập nhật thông tin lương (Admin only)
+        /// </summary>
+        [HttpPut("{id}")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> UpdateSalary(string id, [FromBody] UpdateSalaryRequest request)
+        {
+            var result = await _salaryService.UpdateSalaryAsync(UserId, id, request);
+            return Ok(result);
+        }
+
+        // ==================== COMPLAINTS ====================
+
+        /// <summary>
+        /// Tạo khiếu nại lương (Employee)
+        /// </summary>
+        [HttpPost("complaints")]
+        public async Task<IActionResult> CreateComplaint([FromBody] CreateComplaintRequest request)
+        {
+            var result = await _salaryService.CreateComplaintAsync(UserId, request);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy khiếu nại của mình (Employee)
+        /// </summary>
+        [HttpGet("complaints/my")]
+        public async Task<IActionResult> GetMyComplaints()
+        {
+            var result = await _salaryService.GetMyComplaintsAsync(UserId);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy tất cả khiếu nại (Admin only)
+        /// </summary>
+        [HttpGet("complaints")]
+        [Authorize(Roles = "SuperAdmin,Admin,HR")]
+        public async Task<IActionResult> GetAllComplaints()
+        {
+            var result = await _salaryService.GetAllComplaintsAsync();
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Xử lý khiếu nại (Admin only)
+        /// </summary>
+        [HttpPost("complaints/{id}/resolve")]
+        [Authorize(Roles = "SuperAdmin,Admin,HR")]
+        public async Task<IActionResult> ResolveComplaint(Guid id, [FromBody] ResolveComplaintRequest request)
+        {
+            var result = await _salaryService.ResolveComplaintAsync(UserId, id, request);
+            return Ok(result);
+        }
     }
 }
-
