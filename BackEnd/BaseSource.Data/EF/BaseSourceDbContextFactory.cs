@@ -29,7 +29,9 @@ namespace BaseSource.Data.EF
             var connectionString = configuration.GetConnectionString("BaseSourceDbConnection");
 
             var optionsBuilder = new DbContextOptionsBuilder<BaseSourceDbContext>();
-            optionsBuilder.UseSqlServer(connectionString).EnableSensitiveDataLogging();
+            optionsBuilder.UseSqlServer(connectionString)
+                .EnableSensitiveDataLogging()
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 
             return new BaseSourceDbContext(optionsBuilder.Options);
         }

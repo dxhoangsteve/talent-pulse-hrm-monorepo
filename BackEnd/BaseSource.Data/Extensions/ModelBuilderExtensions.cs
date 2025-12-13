@@ -8,56 +8,99 @@ namespace BaseSource.Data.Extensions
     {
         public static void Seed(this ModelBuilder modelBuilder)
         {
-            // Identity data
-            var roleAdminId = (new Guid("c1105ce5-9dbc-49a9-a7d5-c963b6daa62a")).ToString();
+            SeedRoles(modelBuilder);
+            SeedAdminUser(modelBuilder);
+            SeedDepartments(modelBuilder);
+            SeedHolidays(modelBuilder);
+        }
 
-            modelBuilder.Entity<AppRole>().HasData(
-                new AppRole
-                {
-                    Id = roleAdminId,
-                    Name = "Admin",
-                    NormalizedName = "Admin",
-                    Description = "Administrator role"
-                });
+        private static void SeedRoles(ModelBuilder modelBuilder)
+        {
+            var roles = new[]
+            {
+                new AppRole { Id = "role-superadmin", Name = "SuperAdmin", NormalizedName = "SUPERADMIN", Description = "Super Administrator - Full access" },
+                new AppRole { Id = "role-admin", Name = "Admin", NormalizedName = "ADMIN", Description = "Administrator - System management" },
+                new AppRole { Id = "role-hr", Name = "HR", NormalizedName = "HR", Description = "Human Resources - HR management" },
+                new AppRole { Id = "role-manager", Name = "Manager", NormalizedName = "MANAGER", Description = "Manager - Department management" },
+                new AppRole { Id = "role-employee", Name = "Employee", NormalizedName = "EMPLOYEE", Description = "Employee - Basic access" }
+            };
 
-            var userAdminId = (new Guid("ffded6b0-3769-4976-841b-69459049a62d")).ToString();
-            var hasher = new PasswordHasher<AppUser>();
+            modelBuilder.Entity<AppRole>().HasData(roles);
+        }
+
+        private static void SeedAdminUser(ModelBuilder modelBuilder)
+        {
+            // Pre-computed hash for "Admin@123456" - DO NOT use PasswordHasher here as it generates different hash each time
+            var adminId = "user-superadmin";
+            var staticPasswordHash = "AQAAAAIAAYagAAAAEMNmMg8QG2XUfdQgdFvVxD8dYi2JdZI+j5cK/o3TMg3Kl2nH8/pL/wW2tl+Xk6sXpA==";
+
             modelBuilder.Entity<AppUser>().HasData(new AppUser
             {
-                Id = userAdminId,
+                Id = adminId,
                 UserName = "superadmin",
-                NormalizedUserName = "superadmin",
-                Email = "admin@gmail.com",
-                NormalizedEmail = "admin@gmail.com",
+                NormalizedUserName = "SUPERADMIN",
+                Email = "admin@talentpulse.com",
+                NormalizedEmail = "ADMIN@TALENTPULSE.COM",
                 EmailConfirmed = true,
-                PasswordHash = hasher.HashPassword(null, "12345678"),
-                SecurityStamp = string.Empty
+                PasswordHash = staticPasswordHash,
+                SecurityStamp = "d7b00350-1372-4d4b-97e2-47525287515a",
+                ConcurrencyStamp = "c8b00350-1372-4d4b-97e2-47525287515a",
+                FullName = "Super Admin",
+                IsActive = true,
+                CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
 
             modelBuilder.Entity<AppUserRole>().HasData(new AppUserRole
             {
-                RoleId = roleAdminId,
-                UserId = userAdminId
+                UserId = adminId,
+                RoleId = "role-superadmin"
             });
+        }
 
+        private static void SeedDepartments(ModelBuilder modelBuilder)
+        {
+            var departments = new[]
+            {
+                new Department { Id = new Guid("26dd2648-8b9a-4c28-9a99-92c19f18e916"), Name = "Information Technology", Description = "Phòng Công nghệ Thông tin", CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Department { Id = new Guid("a7b00350-1372-4d4b-97e2-47525287515a"), Name = "Human Resources", Description = "Phòng Nhân sự", CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Department { Id = new Guid("5166c40a-d833-4f93-b0e6-999320623a7e"), Name = "Finance", Description = "Phòng Tài chính - Kế toán", CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Department { Id = new Guid("6c4d7f11-9e8c-4860-84a1-096950275816"), Name = "Marketing", Description = "Phòng Marketing", CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Department { Id = new Guid("df0ec670-348f-4952-bcc6-35327ec29505"), Name = "Operations", Description = "Phòng Vận hành", CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            };
 
-            ////add permission admin
-            //var roleClaims = new List<AppRoleClaim>();
-            //var idIndex = 1;
-            //foreach (var permissionModule in PermissionModules.GetAllPermissionsModules())
-            //{
-            //    foreach (var permission in PermissionModules.GeneratePermissionsForModule(permissionModule))
-            //    {
-            //        roleClaims.Add(new AppRoleClaim
-            //        {
-            //            Id = idIndex++,
-            //            RoleId = roleAdminId,
-            //            ClaimType = Permissions.PermissionType,
-            //            ClaimValue = permission
-            //        });
-            //    }
-            //}
-            //modelBuilder.Entity<AppRoleClaim>().HasData(roleClaims);
+            modelBuilder.Entity<Department>().HasData(departments);
+        }
+
+        private static void SeedHolidays(ModelBuilder modelBuilder)
+        {
+            var holidays = new[]
+            {
+                // 2024 Holidays
+                new Holiday { Id = "hol-2024-newyear", Name = "Tết Dương lịch", Date = new DateTime(2024, 1, 1), Year = 2024, IsRecurring = true },
+                new Holiday { Id = "hol-2024-tet1", Name = "Tết Nguyên đán", Date = new DateTime(2024, 2, 8), Year = 2024, IsRecurring = false },
+                new Holiday { Id = "hol-2024-tet2", Name = "Tết Nguyên đán", Date = new DateTime(2024, 2, 9), Year = 2024, IsRecurring = false },
+                new Holiday { Id = "hol-2024-tet3", Name = "Tết Nguyên đán", Date = new DateTime(2024, 2, 10), Year = 2024, IsRecurring = false },
+                new Holiday { Id = "hol-2024-tet4", Name = "Tết Nguyên đán", Date = new DateTime(2024, 2, 11), Year = 2024, IsRecurring = false },
+                new Holiday { Id = "hol-2024-tet5", Name = "Tết Nguyên đán", Date = new DateTime(2024, 2, 12), Year = 2024, IsRecurring = false },
+                new Holiday { Id = "hol-2024-hung", Name = "Giỗ Tổ Hùng Vương", Date = new DateTime(2024, 4, 18), Year = 2024, IsRecurring = false },
+                new Holiday { Id = "hol-2024-304", Name = "Ngày Giải phóng miền Nam", Date = new DateTime(2024, 4, 30), Year = 2024, IsRecurring = true },
+                new Holiday { Id = "hol-2024-015", Name = "Ngày Quốc tế Lao động", Date = new DateTime(2024, 5, 1), Year = 2024, IsRecurring = true },
+                new Holiday { Id = "hol-2024-029", Name = "Ngày Quốc khánh", Date = new DateTime(2024, 9, 2), Year = 2024, IsRecurring = true },
+                
+                // 2025 Holidays
+                new Holiday { Id = "hol-2025-newyear", Name = "Tết Dương lịch", Date = new DateTime(2025, 1, 1), Year = 2025, IsRecurring = true },
+                new Holiday { Id = "hol-2025-tet1", Name = "Tết Nguyên đán", Date = new DateTime(2025, 1, 28), Year = 2025, IsRecurring = false },
+                new Holiday { Id = "hol-2025-tet2", Name = "Tết Nguyên đán", Date = new DateTime(2025, 1, 29), Year = 2025, IsRecurring = false },
+                new Holiday { Id = "hol-2025-tet3", Name = "Tết Nguyên đán", Date = new DateTime(2025, 1, 30), Year = 2025, IsRecurring = false },
+                new Holiday { Id = "hol-2025-tet4", Name = "Tết Nguyên đán", Date = new DateTime(2025, 1, 31), Year = 2025, IsRecurring = false },
+                new Holiday { Id = "hol-2025-tet5", Name = "Tết Nguyên đán", Date = new DateTime(2025, 2, 1), Year = 2025, IsRecurring = false },
+                new Holiday { Id = "hol-2025-hung", Name = "Giỗ Tổ Hùng Vương", Date = new DateTime(2025, 4, 7), Year = 2025, IsRecurring = false },
+                new Holiday { Id = "hol-2025-304", Name = "Ngày Giải phóng miền Nam", Date = new DateTime(2025, 4, 30), Year = 2025, IsRecurring = true },
+                new Holiday { Id = "hol-2025-015", Name = "Ngày Quốc tế Lao động", Date = new DateTime(2025, 5, 1), Year = 2025, IsRecurring = true },
+                new Holiday { Id = "hol-2025-029", Name = "Ngày Quốc khánh", Date = new DateTime(2025, 9, 2), Year = 2025, IsRecurring = true }
+            };
+
+            modelBuilder.Entity<Holiday>().HasData(holidays);
         }
     }
 }

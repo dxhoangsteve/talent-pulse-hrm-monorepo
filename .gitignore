@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Project-specific docs (private)
+DATABASE_DOCS.md
+
 # User-specific files
 *.rsuser
 *.suo
@@ -416,3 +419,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+implementation_plan.md.resolved

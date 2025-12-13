@@ -45,11 +45,11 @@ namespace BaseSource.API.Controllers
             }
 
             var result = await _userServices.AuthenticateAsync(user);
-            if (result.Key)
+            if (result.IsSuccessed)
             {
-                return Ok(new ApiSuccessResult<string>(result.Value));
+                return Ok(result);
             }
-            return Ok(new ApiErrorResult<string>(result.Value));
+            return Ok(result);
         }
 
         [HttpPost("ConfirmEmail")]
@@ -132,6 +132,37 @@ namespace BaseSource.API.Controllers
             var result = await _userServices.UpdateAsync(UserId, model);
             if (result.Key)
                 return Ok(new ApiSuccessResult<string>());
+            return Ok(new ApiErrorResult<string>(result.Value));
+        }
+
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers([FromQuery] GetUserPagingRequest request)
+        {
+            var result = await _userServices.GetUsersPagingAsync(request);
+            return Ok(result);
+        }
+
+        [HttpPut("users/{id}")]
+        public async Task<IActionResult> UpdateUser(string id, [FromBody] UserUpdateDto model)
+        {
+            var result = await _userServices.UpdateAsync(id, model);
+            if (result.Key) return Ok(new ApiSuccessResult<string>());
+            return Ok(new ApiErrorResult<string>(result.Value));
+        }
+
+        [HttpDelete("users/{id}")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var result = await _userServices.DeleteAsync(id);
+            if (result.Key) return Ok(new ApiSuccessResult<string>());
+            return Ok(new ApiErrorResult<string>(result.Value));
+        }
+
+        [HttpPost("users/{id}/set-password")]
+        public async Task<IActionResult> SetPassword(string id, [FromBody] string newPassword)
+        {
+            var result = await _userServices.SetPasswordAsync(id, newPassword);
+            if (result.Key) return Ok(new ApiSuccessResult<string>());
             return Ok(new ApiErrorResult<string>(result.Value));
         }
 

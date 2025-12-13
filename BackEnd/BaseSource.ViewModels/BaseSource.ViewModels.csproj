@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>disable</Nullable>
+		<AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
 	</PropertyGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\BaseSource.Shared\BaseSource.Shared.csproj" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
 	</ItemGroup>
 </Project>

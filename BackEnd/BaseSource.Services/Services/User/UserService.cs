@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using BaseSource.Data.EF;
 using BaseSource.Data.Entities;
+using BaseSource.ViewModels.Common;
 using BaseSource.ViewModels.User;
-using EFCore.UnitOfWork;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -17,92 +17,166 @@ namespace BaseSouce.Services.Services.User
 {
     public class UserService : IUserService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly BaseSourceDbContext _context;
         private readonly UserManager<AppUser> _userManager;
         private readonly ILogger<UserService> _logger;
         private readonly IMapper _mapper;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IConfiguration _configuration;
 
-        public UserService(IUnitOfWork<BaseSourceDbContext> unitOfWork,
+        public UserService(
+            BaseSourceDbContext context,
             UserManager<AppUser> userManager,
             ILogger<UserService> logger,
             IMapper mapper,
             SignInManager<AppUser> signInManager,
             IConfiguration configuration)
         {
-            _unitOfWork = unitOfWork;
+            _context = context;
             _userManager = userManager;
             _logger = logger;
             _mapper = mapper;
             _signInManager = signInManager;
             _configuration = configuration;
-
-
         }
 
-
-        public async Task<KeyValuePair<bool, string>> AuthenticateAsync(LoginRequestVm model)
+        public async Task<ApiResult<LoginResponseVm>> AuthenticateAsync(LoginRequestVm model)
         {
             try
             {
-                //var resultTele = await _telegramBotClient.TestApiAsync();
-                //await _telegramBotClient
-                //    .SendTextMessageAsync(new ChatId(1711431727), $@"User: abc{Environment.NewLine}Tên luồng:123 {Environment.NewLine}Live:1 {Environment.NewLine}Kiểu live: 24/7{Environment.NewLine}Lên lịch:123", ParseMode.Default, true);
+                var userName = model.UserName.ToLower();
+                var existingUser = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => 
+                        (x.UserName!.ToLower() == userName || x.Email!.ToLower() == userName) 
+                        && x.IsActive);
 
-                //_logger.LogError("Authentication");
-                model.UserName = model.UserName.ToLower();
-                var existingUser = await _unitOfWork.GetRepository<AppUser>()
-                    .GetFirstOrDefaultAsync(predicate: x => (x.UserName.ToLower() == model.UserName
-                    || x.Email.ToLower() == model.UserName.ToLower()) && x.DeletedTime == null, disableTracking: true);
                 if (existingUser == null)
                 {
-                    return new KeyValuePair<bool, string>(false, "Tài khoản không tồn tại");
+                    return new ApiErrorResult<LoginResponseVm>("Tài khoản không tồn tại");
                 }
-                //if (!existingUser.EmailConfirmed)
-                //{
-                //    _logger.LogInformation("Begin Send email confirm account");
-                //    //send email confirm account
-                //    var code = await _userManager.GenerateEmailConfirmationTokenAsync(existingUser);
-                //    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-                //    var clientEndpoint = _configuration["ClientEndpoint"];
-
-                //    var callbackUrl = $"{clientEndpoint}/auth/confirmEmail?userId={existingUser.Id}&code={code}";
-                //    //send email to user
-                //    _ = Task.Run(() => _emailService.SendEmailConfirmAccountAsync(callbackUrl, existingUser.Email));
-                //    _logger.LogInformation("End Send email confirm account");
-                //    //_ = _emailService.SendEmailConfirmAccount(existingUser);
-                //    return new KeyValuePair<bool, string>(false, "Please verify your email before logging in.");
-                //}
                 var result = await _signInManager.PasswordSignInAsync(existingUser, model.Password, true, true);
+                
                 if (!result.Succeeded)
                 {
-                    var error = string.Empty;
-                    if (result.RequiresTwoFactor)
-                    {
-#pragma warning disable S1854 // Unused assignments should be removed
-                        error = "Requires Two Factor.";
-#pragma warning restore S1854 // Unused assignments should be removed
-                    }
-                    if (result.IsLockedOut)
-                    {
-                        error = "User account locked out.";
-                    }
-                    else
-                    {
-                        error = "Tài khoản hoặc mật khẩu không chính xác!";
-                    }
-                    return new KeyValuePair<bool, string>(false, error);
+                    var error = result.IsLockedOut 
+                        ? "Tài khoản đã bị khóa." 
+                        : "Tài khoản hoặc mật khẩu không chính xác!";
+                    return new ApiErrorResult<LoginResponseVm>(error);
                 }
+
                 var token = await GenerateJwtToken(existingUser);
-                return new KeyValuePair<bool, string>(true, token);
+                var roles = await _userManager.GetRolesAsync(existingUser);
+                var role = roles.FirstOrDefault() ?? "Employee";
+
+                return new ApiSuccessResult<LoginResponseVm>(new LoginResponseVm 
+                { 
+                    Token = token,
+                    Role = role
+                });
             }
             catch (Exception ex)
             {
-                return new KeyValuePair<bool, string>(false, "Tài khoản hoặc mật khẩu không chính xác!");
+                _logger.LogError(ex, "Authentication failed");
+                return new ApiErrorResult<LoginResponseVm>("Đăng nhập thất bại!");
             }
+        }
 
+        public async Task<KeyValuePair<bool, string>> CreateAsync(RegisterRequestVm model)
+        {
+            try
+            {
+                if (await _userManager.FindByNameAsync(model.UserName) != null)
+                {
+                    return new KeyValuePair<bool, string>(false, "Tài khoản đã tồn tại!");
+                }
+
+                if (await _userManager.FindByEmailAsync(model.UserName) != null)
+                {
+                    return new KeyValuePair<bool, string>(false, "Email đã được sử dụng!");
+                }
+
+                var user = new AppUser
+                {
+                    Email = model.UserName,
+                    UserName = model.UserName,
+                    NormalizedEmail = model.UserName.ToUpper(),
+                    NormalizedUserName = model.UserName.ToUpper(),
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    FullName = model.UserName,
+                    IsActive = true,
+                    CreatedTime = DateTime.UtcNow,
+                    BaseSalary = model.BaseSalary,
+                    DepartmentId = model.DepartmentId,
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+                
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return new KeyValuePair<bool, string>(false, errors);
+                }
+
+                // Add default Employee role
+                await _userManager.AddToRoleAsync(user, "Employee");
+
+                return new KeyValuePair<bool, string>(true, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Create account failed");
+                return new KeyValuePair<bool, string>(false, "Tạo tài khoản thất bại!");
+            }
+        }
+
+        public async Task<KeyValuePair<bool, string>> ConfirmEmailAsync(ConfirmEmailVm model)
+        {
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if (user == null)
+                return new KeyValuePair<bool, string>(false, "Tài khoản không tồn tại");
+
+            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Code));
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+            
+            return result.Succeeded
+                ? new KeyValuePair<bool, string>(true, string.Empty)
+                : new KeyValuePair<bool, string>(false, "Xác thực email thất bại!");
+        }
+
+        public async Task<KeyValuePair<bool, string>> ForgotPasswordAsync(ForgotPasswordVm model)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Email!.ToLower() == model.Email.ToLower());
+
+            if (user == null)
+                return new KeyValuePair<bool, string>(true, string.Empty); // Don't reveal user existence
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            var clientEndpoint = _configuration["ClientEndpoint"];
+            var callbackUrl = $"{clientEndpoint}/auth/reset-password?code={encodedToken}&email={model.Email}";
+
+            // TODO: Send email with callbackUrl
+            _logger.LogInformation("Password reset link: {Url}", callbackUrl);
+
+            return new KeyValuePair<bool, string>(true, string.Empty);
+        }
+
+        public async Task<KeyValuePair<bool, string>> ResetPasswordAsync(ResetPasswordVm model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+                return new KeyValuePair<bool, string>(false, "Email không tồn tại");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Code));
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.Password);
+
+            return result.Succeeded
+                ? new KeyValuePair<bool, string>(true, string.Empty)
+                : new KeyValuePair<bool, string>(false, "Đặt lại mật khẩu thất bại!");
         }
 
         public async Task<KeyValuePair<bool, string>> ChangePasswordAsync(string id, ChangePasswordVm model)
@@ -111,269 +185,170 @@ namespace BaseSouce.Services.Services.User
             {
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
-                    return new KeyValuePair<bool, string>(false, "Account does not exist");
+                    return new KeyValuePair<bool, string>(false, "Tài khoản không tồn tại");
+
                 var result = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+                
                 if (result.Succeeded)
                 {
-                    user.Password = model.NewPassword;
-                    await _userManager.UpdateAsync(user);
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    await _unitOfWork.SaveChangesAsync();
                     return new KeyValuePair<bool, string>(true, string.Empty);
                 }
-                return new KeyValuePair<bool, string>(false, "Mật khẩu cũ không chính xác, hoặc mật khẩu mới không hợp lệ!");
+
+                return new KeyValuePair<bool, string>(false, "Mật khẩu cũ không chính xác!");
             }
             catch (Exception ex)
             {
-
-                return new KeyValuePair<bool, string>(false, "Password update failed, please try again");
-            }
-
-        }
-
-        public async Task<KeyValuePair<bool, string>> ConfirmEmailAsync(ConfirmEmailVm model)
-        {
-            var user = await _userManager.FindByIdAsync(model.UserId);
-            if (user == null)
-                return new KeyValuePair<bool, string>(false, "Account does not exist");
-            model.Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Code));
-            // Xác thực email
-            var result = await _userManager.ConfirmEmailAsync(user, model.Code);
-            if (result.Succeeded)
-            {
-                return new KeyValuePair<bool, string>(true, string.Empty);
-            }
-            return new KeyValuePair<bool, string>(false, "Email validation failed!");
-        }
-
-        public async Task<KeyValuePair<bool, string>> CreateAsync(RegisterRequestVm model)
-        {
-            try
-            {
-                //_logger.LogInformation($"[ReferralCode:{model.ReferralCode}]");
-
-                //if (!string.IsNullOrEmpty(model.ReferralCode))
-                //{
-                //    model.ReferralCode = model.ReferralCode.Trim();
-                //}
-
-                if (await _userManager.FindByNameAsync(model.UserName) != null)
-                {
-                    return new KeyValuePair<bool, string>(false, "Tài khoản đã tồn tại!");
-                }
-                //if (await _userManager.FindByEmailAsync(model.Email) != null)
-                //{
-                //    return new KeyValuePair<bool, string>(false, "Email already exists");
-                //}
-                // var referralCode = RandomHelper.RandomString(9);
-
-                //var exitstEntity = await _unitOfWork.GetRepository<AppUser>()
-                //    .GetFirstOrDefaultAsync(predicate: x => x.ReferralCode == referralCode);
-
-                //if (exitstEntity != null)
-                //{
-                //    referralCode = RandomHelper.RandomString(9);
-                //}
-
-                var userIdParent = string.Empty;
-                //if (!string.IsNullOrEmpty(model.ReferralCode))
-                //{
-                //    var userParent = await _unitOfWork.GetRepository<AppUser>()
-                //        .GetFirstOrDefaultAsync(predicate: x => x.ReferralCode == model.ReferralCode);
-                //    if (userParent != null)
-                //    {
-                //        userIdParent = userParent.Id;
-                //    }
-                //}
-                var hasher = new PasswordHasher<AppUser>();
-
-                var user = new AppUser
-                {
-                    Email = model.UserName,
-                    UserName = model.UserName,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    PhoneNumber = model.PhoneNumber,
-                    PasswordHash = hasher.HashPassword(null, model.Password),
-                    Password = model.Password,
-                    CreatedTime = DateTime.Now,
-                    NormalizedEmail = model.UserName,
-                    NormalizedUserName = model.UserName,
-                    LinkFB = model.LinkFB,
-
-                };
-
-                //  _logger.LogInformation($"User [{user.Email}] - [ParentId:{user.ParentId}]");
-                await _unitOfWork.GetRepository<AppUser>().InsertAsync(user);
-                await _unitOfWork.SaveChangesAsync();
-
-                ////send email confirm account
-                //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                //var clientEndpoint = _configuration["ClientEndpoint"];
-
-                //var callbackUrl = $"{clientEndpoint}/auth/confirmEmail?userId={user.Id}&code={code}";
-
-                ////send email to user
-                //_ = Task.Run(() => _emailService.SendEmailConfirmAccountAsync(callbackUrl, user.Email));
-
-                ////send email to admin
-                //_ = Task.Run(() => _emailService.SendEmailInfoRegister(model));
-
-                return new KeyValuePair<bool, string>(true, string.Empty);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Create account failed by error:[{ex}]");
-                return new KeyValuePair<bool, string>(true, "Create account failed");
+                _logger.LogError(ex, "Change password failed");
+                return new KeyValuePair<bool, string>(false, "Đổi mật khẩu thất bại!");
             }
         }
-
-        public async Task<KeyValuePair<bool, string>> ForgotPasswordAsync(ForgotPasswordVm model)
-        {
-            var user = await _unitOfWork.GetRepository<AppUser>().GetFirstOrDefaultAsync(predicate: x => x.Email.ToLower() == model.Email);
-            if (user == null)
-                return new KeyValuePair<bool, string>(true, string.Empty);
-
-            var tokenGenerated = await _userManager.GeneratePasswordResetTokenAsync(user);
-            byte[] tokenGeneratedBytes = Encoding.UTF8.GetBytes(tokenGenerated);
-            var codeEncoded = WebEncoders.Base64UrlEncode(tokenGeneratedBytes);
-
-            var clientEndpoint = _configuration["ClientEndpoint"];
-
-
-            var callbackUrl = $"{clientEndpoint}/auth/reset-password?code={codeEncoded}&email={model.Email}";
-            //send email forgot password
-           // _ = Task.Run(() => _emailService.SendEmailForgotPassword(callbackUrl, model.Email));
-            return new KeyValuePair<bool, string>(true, string.Empty);
-        }
-
-        public Task<double> GetAccountBalanceAsync(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        
-
-        public async Task<ProfifleInfoDto> GetProfileInfoAsync(string userId)
-        {
-            var _repositoryUser = _unitOfWork.GetRepository<AppUser>();
-
-            //var _repositoryStream = _unitOfWork.GetRepository<StreamHistory>();
-
-            var profileInfo = await _repositoryUser.GetFirstOrDefaultAsync(
-                predicate: x => x.Id == userId,
-                selector: x => new ProfifleInfoDto
-                {
-                    UserName = x.UserName,
-                    LinkFB = x.LinkFB,
-                    Phone = x.PhoneNumber,
-                    TelegramAPI = x.TelegramAPI,
-                });
-
-            return profileInfo;
-        }
-
-        public Task<UserInfoResponse> GetUserAdminAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-
 
         public async Task<UserInfoResponse> GetUserInfoAsync(string id)
         {
-            return await _unitOfWork.GetRepository<AppUser>()
-                     .GetFirstOrDefaultAsync(
-                     predicate: x => x.Id == id,
-                     selector: x => _mapper.Map<AppUser, UserInfoResponse>(x),
-                     include: x => x.Include(i => i.UserRoles).ThenInclude(j => j.Role));
+            var user = await _context.Users
+                .AsNoTracking()
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            return _mapper.Map<UserInfoResponse>(user);
         }
 
-
-
-
-        public async Task<KeyValuePair<bool, string>> ResetPasswordAsync(ResetPasswordVm model)
+        public async Task<ProfifleInfoDto> GetProfileInfoAsync(string userId)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-                return new KeyValuePair<bool, string>(false, "Email does not exist");
-            //reset password
-            var codeDecodedBytes = WebEncoders.Base64UrlDecode(model.Code);
-            var codeDecoded = Encoding.UTF8.GetString(codeDecodedBytes);
+            var user = await _context.Users
+                .AsNoTracking()
+                .Where(x => x.Id == userId)
+                .Select(x => new ProfifleInfoDto
+                {
+                    UserName = x.UserName,
+                    Phone = x.PhoneNumber,
+                })
+                .FirstOrDefaultAsync();
 
-            var result = await _userManager.ResetPasswordAsync(user, codeDecoded, model.Password);
-            if (result.Succeeded)
-            {
-                user.Password = model.Password;
-                await _unitOfWork.SaveChangesAsync();
-                return new KeyValuePair<bool, string>(true, string.Empty);
-            }
-            return new KeyValuePair<bool, string>(false, "Reset Password failed!");
+            return user ?? new ProfifleInfoDto();
         }
 
         public async Task<KeyValuePair<bool, string>> UpdateAsync(string userId, UserUpdateDto model)
         {
             try
             {
-                var _repository = _unitOfWork.GetRepository<AppUser>();
-
-                var userCurrent = await _repository.GetFirstOrDefaultAsync(
-                    predicate: x => x.Id == userId,
-                    disableTracking: false);
-                if (userCurrent == null)
-                {
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+                if (user == null)
                     return new KeyValuePair<bool, string>(false, "Người dùng không tồn tại!");
-                }
-                //userCurrent.PhoneNumber = model.Phone;
-                //userCurrent.LinkFB = model.LinkFB;
-                //userCurrent.LinkTelegram = model.LinkTelegram;
-                userCurrent.TelegramAPI = model.TelegramAPI;
-                _repository.Update(userCurrent);
-                await _unitOfWork.SaveChangesAsync();
+
+                user.PhoneNumber = model.Phone ?? user.PhoneNumber;
+                user.Email = model.Email ?? user.Email;
+
+                await _context.SaveChangesAsync();
                 return new KeyValuePair<bool, string>(true, string.Empty);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Update user failed by error:[{ex}]");
+                _logger.LogError(ex, "Update user failed");
                 return new KeyValuePair<bool, string>(false, "Cập nhật không thành công!");
             }
         }
 
-
-
-        #region function helper
-        /// <summary>
-        /// GenerateJwtToken
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        private async Task<string> GenerateJwtToken(AppUser user)
+        public async Task<KeyValuePair<bool, string>> DeleteAsync(string userId)
         {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return new KeyValuePair<bool, string>(false, "Người dùng không tồn tại");
 
             var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("SuperAdmin"))
+            {
+                return new KeyValuePair<bool, string>(false, "Không thể xóa tài khoản Quản trị tối cao (SuperAdmin)!");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded) return new KeyValuePair<bool, string>(false, "Xóa thất bại");
+
+            return new KeyValuePair<bool, string>(true, string.Empty);
+        }
+
+        public async Task<KeyValuePair<bool, string>> SetPasswordAsync(string userId, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return new KeyValuePair<bool, string>(false, "Người dùng không tồn tại");
+
+            var removeResult = await _userManager.RemovePasswordAsync(user);
+            if (!removeResult.Succeeded) return new KeyValuePair<bool, string>(false, "Lỗi khi xóa mật khẩu cũ");
+
+            var addResult = await _userManager.AddPasswordAsync(user, newPassword);
+            if (!addResult.Succeeded) return new KeyValuePair<bool, string>(false, "Lỗi khi đặt mật khẩu mới");
+
+            return new KeyValuePair<bool, string>(true, string.Empty);
+        }
+
+        public async Task<ApiResult<PagedResult<UserVm>>> GetUsersPagingAsync(GetUserPagingRequest request)
+        {
+            var query = _context.Users.AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.Keyword))
+            {
+                query = query.Where(x => x.UserName.Contains(request.Keyword) || x.Email.Contains(request.Keyword));
+            }
+
+            // Paging
+            int totalRow = await query.CountAsync();
+
+            var data = await query.OrderByDescending(x => x.CreatedTime)
+                .Skip((request.PageIndex - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(x => new UserVm()
+                {
+                    Email = x.Email,
+                    FullName = x.FullName,
+                    Id = x.Id,
+                    PhoneNumber = x.PhoneNumber,
+                    UserName = x.UserName,
+                    IsActive = x.IsActive
+                }).ToListAsync();
+
+            // Get Roles for each user
+            foreach (var user in data)
+            {
+                var appUser = await _userManager.FindByIdAsync(user.Id);
+                var roles = await _userManager.GetRolesAsync(appUser);
+                user.Roles = roles;
+            }
+
+            var pagedResult = new PagedResult<UserVm>()
+            {
+                TotalCount = totalRow,
+                TotalPages = (int)Math.Ceiling(totalRow / (double)request.PageSize),
+                PageSize = request.PageSize,
+                PageIndex = request.PageIndex,
+                Items = data
+            };
+            return new ApiSuccessResult<PagedResult<UserVm>>(pagedResult);
+        }
+
+        #region Private Methods
+        private async Task<string> GenerateJwtToken(AppUser user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
             var claims = new[]
-              {
-                new Claim(ClaimTypes.Email,user.Email??string.Empty),
-                new Claim(ClaimTypes.Role, string.Join(";",roles)),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            {
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.Role, string.Join(";", roles)),
+                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Tokens:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Tokens:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(_configuration["Tokens:Issuer"],
-             _configuration["Tokens:Issuer"],
-             claims,
-             expires: DateTime.Now.AddDays(15),
-             signingCredentials: creds);
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Tokens:Issuer"],
+                audience: _configuration["Tokens:Issuer"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(15),
+                signingCredentials: creds);
 
-            var jwtToken = jwtTokenHandler.WriteToken(token);
-
-            return jwtToken;
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
         #endregion
     }

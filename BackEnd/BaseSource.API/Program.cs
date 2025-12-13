@@ -1,27 +1,25 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using BaseSource.API.Cofigurations;
-using EFCore.UnitOfWork;
 using BaseSource.Data.EF;
 using BaseSource.Data.Entities;
 using BaseSource.Shared.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//add logging
+// Add logging
 builder.Host.ConfigureLogging(logging =>
 {
     logging.ClearProviders();
     logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
-    logging.AddLog4Net();
-    // logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Information);
-
+    logging.AddConsole();
 });
 
-//add db context and unitOfwork
-builder.Services.AddDbContext<BaseSourceDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString(SystemConstants.MainConnectionString)))
-                .AddUnitOfWork<BaseSourceDbContext>();
+// Add DbContext
+builder.Services.AddDbContext<BaseSourceDbContext>(options => 
+    options.UseSqlServer(builder.Configuration.GetConnectionString(SystemConstants.MainConnectionString)));
 
+// Add Identity
 builder.Services.AddIdentity<AppUser, AppRole>()
                 .AddEntityFrameworkStores<BaseSourceDbContext>()
                 .AddDefaultTokenProviders();
@@ -34,54 +32,48 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
 });
-//AddAuthorization
-//builder.Services.AuthorizationPolyConfiguration();
-//Declare DI
+
+// DI Configuration
 builder.Services.DIConfiguration();
 
-
-
-// Add services to the container.
-
+// Add services to the container
 builder.Services.AddControllers();
 
-//builder.Services.AddHostedService<CheckConnectBotService>();
-//add autoMapper
+// Add AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-// Register the Swagger generator, defining 1 or more Swagger documents
+// Add CORS for mobile app
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Configure Swagger
 builder.Services.SwaggerConfiguration(builder.Configuration);
-
-
-
-
-
-
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Use CORS
+app.UseCors("AllowAll");
+
 app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseEndpoints(endpoints =>
-{
-    //endpoints.MapHub<WebHub>($"/WebHub");
-    //endpoints.MapHub<BotHub>("/BotHub");
-});
 
 app.Run();
