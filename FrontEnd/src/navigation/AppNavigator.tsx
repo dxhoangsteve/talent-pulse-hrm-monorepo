@@ -18,6 +18,9 @@ import ApprovalScreen from '../screens/ApprovalScreen';
 import DepartmentManagementScreen from '../screens/DepartmentManagementScreen';
 import AttendanceScreen from '../screens/AttendanceScreen';
 import AttendanceHistoryScreen from '../screens/AttendanceHistoryScreen';
+import LeaveHistoryScreen from '../screens/LeaveHistoryScreen';
+import OTHistoryScreen from '../screens/OTHistoryScreen';
+import SalaryHistoryScreen from '../screens/SalaryHistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -47,6 +50,9 @@ export default function AppNavigator() {
             <Stack.Screen name="DepartmentManagement" component={DepartmentManagementScreen} />
             <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} />
             <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+            <Stack.Screen name="LeaveHistory" component={LeaveHistoryScreen} />
+            <Stack.Screen name="OTHistory" component={OTHistoryScreen} />
+            <Stack.Screen name="SalaryHistory" component={SalaryHistoryScreen} />
           </>
         ) : isManager ? (
           <>

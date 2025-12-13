@@ -108,6 +108,27 @@ export default function AdminDashboard({ navigation }: Props) {
             color="#10B981"
             onPress={() => navigation.navigate('AttendanceHistory')}
           />
+          <ActionItem 
+            title="Lịch sử Nghỉ phép" 
+            subtitle="Tất cả đơn nghỉ phép"
+            icon={<Calendar size={24} color="white" />}
+            color="#2196F3"
+            onPress={() => navigation.navigate('LeaveHistory')}
+          />
+          <ActionItem 
+            title="Lịch sử Tăng ca" 
+            subtitle="Tất cả đơn OT"
+            icon={<Clock size={24} color="white" />}
+            color="#FF9800"
+            onPress={() => navigation.navigate('OTHistory')}
+          />
+          <ActionItem 
+            title="Lịch sử Lương" 
+            subtitle="Bảng lương & khiếu nại"
+            icon={<DollarSign size={24} color="white" />}
+            color="#4CAF50"
+            onPress={() => navigation.navigate('SalaryHistory')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -16,6 +16,9 @@ export type RootStackParamList = {
   AttendanceHistory: undefined;
   MySalary: undefined;
   SalaryManagement: undefined;
+  LeaveHistory: undefined;
+  OTHistory: undefined;
+  SalaryHistory: undefined;
 };
 
 export interface DecodedToken {
