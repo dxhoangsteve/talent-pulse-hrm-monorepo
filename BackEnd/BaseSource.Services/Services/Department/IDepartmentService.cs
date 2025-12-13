@@ -20,6 +20,12 @@ namespace BaseSource.Services.Services.Department
         /// Lấy danh sách user có thể làm trưởng/phó phòng
         /// </summary>
         Task<ApiResult<List<UserSelectVm>>> GetAvailableLeadersAsync();
+
+        /// <summary>
+        /// Lấy phòng ban mà user đang quản lý (Manager/Deputy)
+        /// Trả về null nếu user không quản lý phòng ban nào
+        /// </summary>
+        Task<Guid?> GetManagedDepartmentIdAsync(string userId);
     }
 
     /// <summary>

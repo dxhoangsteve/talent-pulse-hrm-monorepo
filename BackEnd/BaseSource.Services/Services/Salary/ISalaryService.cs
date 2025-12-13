@@ -13,6 +13,9 @@ namespace BaseSource.Services.Services.Salary
         
         /// <summary>Lấy tất cả phiếu lương (Admin)</summary>
         Task<ApiResult<List<SalaryVm>>> GetAllSalaryAsync(int month, int year);
+
+        /// <summary>Lấy phiếu lương theo phòng ban (Manager/Deputy)</summary>
+        Task<ApiResult<List<SalaryVm>>> GetDepartmentSalaryAsync(Guid departmentId, int month, int year);
         
         /// <summary>Duyệt phiếu lương (Admin)</summary>
         Task<ApiResult<bool>> ApproveSalaryAsync(string adminId, string salaryId);
@@ -24,3 +27,4 @@ namespace BaseSource.Services.Services.Salary
         Task<ApiResult<List<SalaryVm>>> GetPaymentHistoryAsync(SalaryHistoryQuery query);
     }
 }
+

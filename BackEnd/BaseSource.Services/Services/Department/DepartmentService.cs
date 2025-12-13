@@ -197,6 +197,28 @@ namespace BaseSource.Services.Services.Department
 
             return new ApiSuccessResult<List<UserSelectVm>>(users);
         }
+
+        /// <summary>
+        /// Lấy phòng ban mà user đang quản lý (Manager hoặc Deputy)
+        /// </summary>
+        public async Task<Guid?> GetManagedDepartmentIdAsync(string userId)
+        {
+            // Check if user is Manager of any department
+            var deptAsManager = await _context.Departments
+                .FirstOrDefaultAsync(d => d.ManagerId == userId);
+            
+            if (deptAsManager != null)
+                return deptAsManager.Id;
+
+            // Check if user is Deputy of any department
+            var deptAsDeputy = await _context.Departments
+                .FirstOrDefaultAsync(d => d.DeputyId == userId);
+            
+            if (deptAsDeputy != null)
+                return deptAsDeputy.Id;
+
+            return null;
+        }
     }
 }
 

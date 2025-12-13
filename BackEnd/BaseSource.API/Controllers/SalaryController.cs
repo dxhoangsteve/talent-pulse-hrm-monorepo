@@ -1,3 +1,4 @@
+using BaseSource.Services.Services.Department;
 using BaseSource.Services.Services.Salary;
 using BaseSource.ViewModels.Salary;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +13,12 @@ namespace BaseSource.API.Controllers
     public class SalaryController : ControllerBase
     {
         private readonly ISalaryService _salaryService;
+        private readonly IDepartmentService _departmentService;
 
-        public SalaryController(ISalaryService salaryService)
+        public SalaryController(ISalaryService salaryService, IDepartmentService departmentService)
         {
             _salaryService = salaryService;
+            _departmentService = departmentService;
         }
 
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -53,6 +56,25 @@ namespace BaseSource.API.Controllers
         }
 
         /// <summary>
+        /// Lấy phiếu lương theo phòng ban (Manager/Deputy only - chỉ phòng ban mình quản lý)
+        /// </summary>
+        [HttpGet("department")]
+        [Authorize(Roles = "SuperAdmin,Admin,Manager,DeputyManager")]
+        public async Task<IActionResult> GetDepartmentSalary([FromQuery] int month, [FromQuery] int year)
+        {
+            // Get the department this user manages
+            var managedDeptId = await _departmentService.GetManagedDepartmentIdAsync(UserId);
+            
+            if (managedDeptId == null)
+            {
+                return Ok(new { IsSuccessed = false, Message = "Bạn không quản lý phòng ban nào" });
+            }
+
+            var result = await _salaryService.GetDepartmentSalaryAsync(managedDeptId.Value, month, year);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Duyệt phiếu lương (Admin only)
         /// </summary>
         [HttpPost("{id}/approve")]
@@ -86,3 +108,4 @@ namespace BaseSource.API.Controllers
         }
     }
 }
+

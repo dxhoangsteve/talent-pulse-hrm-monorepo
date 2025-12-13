@@ -177,6 +177,33 @@ namespace BaseSource.Services.Services.Salary
             }
         }
 
+        public async Task<ApiResult<List<SalaryVm>>> GetDepartmentSalaryAsync(Guid departmentId, int month, int year)
+        {
+            try
+            {
+                var salaries = await _context.Salaries
+                    .Include(s => s.Employee)
+                        .ThenInclude(e => e.Department)
+                    .Include(s => s.ApprovedByUser)
+                    .Include(s => s.PaidByUser)
+                    .Where(s => s.Employee.DepartmentId == departmentId && s.Month == month && s.Year == year)
+                    .OrderBy(s => s.Employee.FullName)
+                    .ToListAsync();
+
+                var result = new List<SalaryVm>();
+                foreach (var s in salaries)
+                {
+                    result.Add(await MapToVmAsync(s));
+                }
+
+                return new ApiResult<List<SalaryVm>> { IsSuccessed = true, ResultObj = result };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<List<SalaryVm>> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
         public async Task<ApiResult<bool>> ApproveSalaryAsync(string adminId, string salaryId)
         {
             try
