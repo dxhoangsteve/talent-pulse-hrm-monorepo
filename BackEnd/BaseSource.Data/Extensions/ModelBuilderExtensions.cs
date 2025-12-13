@@ -30,9 +30,10 @@ namespace BaseSource.Data.Extensions
 
         private static void SeedAdminUser(ModelBuilder modelBuilder)
         {
-            // Pre-computed hash for "Admin@123456" - DO NOT use PasswordHasher here as it generates different hash each time
+            var hasher = new PasswordHasher<AppUser>();
             var adminId = "user-superadmin";
-            var staticPasswordHash = "AQAAAAIAAYagAAAAEMNmMg8QG2XUfdQgdFvVxD8dYi2JdZI+j5cK/o3TMg3Kl2nH8/pL/wW2tl+Xk6sXpA==";
+            var adminEmployeeId = "employee-superadmin";
+            var staticPasswordHash = hasher.HashPassword(null, "12345678");
 
             modelBuilder.Entity<AppUser>().HasData(new AppUser
             {
@@ -54,6 +55,19 @@ namespace BaseSource.Data.Extensions
             {
                 UserId = adminId,
                 RoleId = "role-superadmin"
+            });
+
+            // Create Employee for superadmin so attendance/leave/salary features work
+            modelBuilder.Entity<Employee>().HasData(new Employee
+            {
+                Id = adminEmployeeId,
+                EmployeeCode = "ADMIN001",
+                FullName = "Super Admin",
+                Email = "admin@talentpulse.com",
+                UserId = adminId,
+                BaseSalary = 50000000, // 50M VND
+                JoinDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                CreatedTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
         }
 

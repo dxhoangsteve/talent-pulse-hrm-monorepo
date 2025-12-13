@@ -22,7 +22,7 @@ namespace BaseSource.Data.Entities
         /// <summary>
         /// Tham chiếu đến phiếu lương (nếu có)
         /// </summary>
-        public Guid? SalarySlipId { get; set; }
+        public string? SalarySlipId { get; set; }
 
         [ForeignKey(nameof(SalarySlipId))]
         public virtual Salary? SalarySlip { get; set; }

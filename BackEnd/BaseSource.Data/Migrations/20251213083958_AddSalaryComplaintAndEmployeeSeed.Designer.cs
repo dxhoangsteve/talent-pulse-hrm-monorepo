@@ -4,6 +4,7 @@ using BaseSource.Data.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BaseSource.Data.Migrations
 {
     [DbContext(typeof(BaseSourceDbContext))]
-    partial class BaseSourceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251213083958_AddSalaryComplaintAndEmployeeSeed")]
+    partial class AddSalaryComplaintAndEmployeeSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,7 +61,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "role-superadmin",
-                            ConcurrencyStamp = "2c0a77e6-676d-4842-a013-8130a44b3e02",
+                            ConcurrencyStamp = "4e5d2445-e807-44e5-a65c-67efe1516fe8",
                             Description = "Super Administrator - Full access",
                             Name = "SuperAdmin",
                             NormalizedName = "SUPERADMIN"
@@ -66,7 +69,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "role-admin",
-                            ConcurrencyStamp = "e830d98e-d945-4161-aedc-9a02598e56df",
+                            ConcurrencyStamp = "85506e5c-388d-4955-97d6-b51d6b51c6e1",
                             Description = "Administrator - System management",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
@@ -74,7 +77,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "role-hr",
-                            ConcurrencyStamp = "7328352a-a71d-4add-b426-f987e8e50f3b",
+                            ConcurrencyStamp = "5059bcc4-26c2-4482-8b68-61d5c1ea9fb6",
                             Description = "Human Resources - HR management",
                             Name = "HR",
                             NormalizedName = "HR"
@@ -82,7 +85,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "role-manager",
-                            ConcurrencyStamp = "7c2c5846-955f-4256-923a-3c0ef8d8cb43",
+                            ConcurrencyStamp = "55694146-d48d-4667-b010-0a877bc3b266",
                             Description = "Manager - Department management",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
@@ -90,7 +93,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "role-employee",
-                            ConcurrencyStamp = "1975863e-ee69-46d3-9d39-7d112550aa69",
+                            ConcurrencyStamp = "de834e18-f57c-48f6-ae59-24d44b8ebb7e",
                             Description = "Employee - Basic access",
                             Name = "Employee",
                             NormalizedName = "EMPLOYEE"
@@ -238,7 +241,7 @@ namespace BaseSource.Data.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@TALENTPULSE.COM",
                             NormalizedUserName = "SUPERADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEI2hj0o9j/KgKOviJLstS00vhYK3I1C0OYS15eGZqZArTRdH6WmJkkBXIydqpvFgrg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMNmMg8QG2XUfdQgdFvVxD8dYi2JdZI+j5cK/o3TMg3Kl2nH8/pL/wW2tl+Xk6sXpA==",
                             PhoneNumberConfirmed = false,
                             Position = 99,
                             SecurityStamp = "d7b00350-1372-4d4b-97e2-47525287515a",
@@ -669,7 +672,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-newyear",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(2429),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(3741),
                             Date = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Tết Dương lịch",
@@ -678,7 +681,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-tet1",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(3970),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5924),
                             Date = new DateTime(2024, 2, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -687,7 +690,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-tet2",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(3978),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5934),
                             Date = new DateTime(2024, 2, 9, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -696,7 +699,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-tet3",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(3985),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5942),
                             Date = new DateTime(2024, 2, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -705,7 +708,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-tet4",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4038),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5950),
                             Date = new DateTime(2024, 2, 11, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -714,7 +717,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-tet5",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4045),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5958),
                             Date = new DateTime(2024, 2, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -723,7 +726,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-hung",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4052),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5965),
                             Date = new DateTime(2024, 4, 18, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Giỗ Tổ Hùng Vương",
@@ -732,7 +735,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-304",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4058),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5973),
                             Date = new DateTime(2024, 4, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Ngày Giải phóng miền Nam",
@@ -741,7 +744,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-015",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4065),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5982),
                             Date = new DateTime(2024, 5, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Ngày Quốc tế Lao động",
@@ -750,7 +753,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2024-029",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4072),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5989),
                             Date = new DateTime(2024, 9, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Ngày Quốc khánh",
@@ -759,7 +762,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-newyear",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4079),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(5997),
                             Date = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Tết Dương lịch",
@@ -768,7 +771,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-tet1",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4087),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6007),
                             Date = new DateTime(2025, 1, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -777,7 +780,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-tet2",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4094),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6014),
                             Date = new DateTime(2025, 1, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -786,7 +789,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-tet3",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4100),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6022),
                             Date = new DateTime(2025, 1, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -795,7 +798,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-tet4",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4107),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6030),
                             Date = new DateTime(2025, 1, 31, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -804,7 +807,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-tet5",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4114),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6038),
                             Date = new DateTime(2025, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Tết Nguyên đán",
@@ -813,7 +816,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-hung",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4120),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6046),
                             Date = new DateTime(2025, 4, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = false,
                             Name = "Giỗ Tổ Hùng Vương",
@@ -822,7 +825,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-304",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4127),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6054),
                             Date = new DateTime(2025, 4, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Ngày Giải phóng miền Nam",
@@ -831,7 +834,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-015",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4134),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6062),
                             Date = new DateTime(2025, 5, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Ngày Quốc tế Lao động",
@@ -840,7 +843,7 @@ namespace BaseSource.Data.Migrations
                         new
                         {
                             Id = "hol-2025-029",
-                            CreatedTime = new DateTime(2025, 12, 13, 9, 4, 24, 707, DateTimeKind.Utc).AddTicks(4140),
+                            CreatedTime = new DateTime(2025, 12, 13, 8, 39, 57, 268, DateTimeKind.Utc).AddTicks(6070),
                             Date = new DateTime(2025, 9, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsRecurring = true,
                             Name = "Ngày Quốc khánh",

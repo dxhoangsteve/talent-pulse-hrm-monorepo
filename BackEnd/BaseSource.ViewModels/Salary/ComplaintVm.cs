@@ -18,7 +18,7 @@ namespace BaseSource.ViewModels.Salary
         [MaxLength(1000)]
         public string Content { get; set; } = string.Empty;
         
-        public Guid? SalarySlipId { get; set; }
+        public string? SalarySlipId { get; set; }
     }
 
     /// <summary>
