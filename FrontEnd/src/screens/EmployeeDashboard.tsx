@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
@@ -8,20 +8,36 @@ import {
   Clock,
   Calendar,
   FileText,
-  Briefcase
+  Briefcase,
+  DollarSign,
+  X
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/types';
+import { salaryService, SalaryVm } from '../services/salaryService';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function EmployeeDashboard() {
   const { user, logout } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+  const [paidSalary, setPaidSalary] = useState<SalaryVm | null>(null);
+  const [showSalaryNotify, setShowSalaryNotify] = useState(false);
   
-  // Fake data
+  useEffect(() => {
+    checkPaidSalary();
+  }, []);
+
+  const checkPaidSalary = async () => {
+    const salary = await salaryService.getLatestPaidSalary();
+    if (salary) {
+      setPaidSalary(salary);
+      setShowSalaryNotify(true);
+    }
+  };
+  
   const today = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
@@ -43,6 +59,22 @@ export default function EmployeeDashboard() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Salary Paid Notification */}
+        {showSalaryNotify && paidSalary && (
+          <View style={styles.salaryNotify}>
+            <DollarSign size={24} color={Colors.success} />
+            <View style={styles.salaryNotifyContent}>
+              <Text style={styles.salaryNotifyTitle}>Lương đã được phát!</Text>
+              <Text style={styles.salaryNotifyText}>
+                Tháng {paidSalary.month}/{paidSalary.year}: {paidSalary.netSalary.toLocaleString('vi-VN')}đ
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => setShowSalaryNotify(false)}>
+              <X size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Check-in Card */}
         <View style={styles.checkInCard}>
           <Text style={styles.dateText}>{today}</Text>
@@ -287,5 +319,29 @@ const styles = StyleSheet.create({
       width: 8,
       height: 8,
       borderRadius: 4,
-  }
+  },
+  salaryNotify: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.success + '15',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.success + '30',
+  },
+  salaryNotifyContent: {
+    flex: 1,
+    marginLeft: Spacing.sm,
+  },
+  salaryNotifyTitle: {
+    fontWeight: '600',
+    color: Colors.success,
+    fontSize: FontSize.sm,
+  },
+  salaryNotifyText: {
+    color: Colors.text,
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
 });
