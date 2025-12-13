@@ -360,15 +360,10 @@ namespace BaseSource.Services.Services.LeaveRequest
 
         private static decimal CalculateBusinessDays(DateTime startDate, DateTime endDate)
         {
-            decimal totalDays = 0;
-            for (var date = startDate; date <= endDate; date = date.AddDays(1))
-            {
-                if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
-                {
-                    totalDays++;
-                }
-            }
-            return totalDays;
+            // Count all calendar days (inclusive of start and end date)
+            // Example: 13-14 = 2 days (ngày 13 và ngày 14)
+            var totalDays = (endDate.Date - startDate.Date).Days + 1;
+            return Math.Max(1, totalDays); // At least 1 day
         }
 
         private static LeaveRequestDetailVm MapToDetailVm(Data.Entities.LeaveRequest request)

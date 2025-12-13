@@ -194,6 +194,17 @@ Scan QR code bằng Expo Go app trên điện thoại hoặc nhấn `a` để m�
 
 ## Changelog
 
+### v3.1.0 (2024-12-13) - Salary Feature Completion
+
+- ✅ **MySalary Screen**: Nhân viên có thể xem phiếu lương của mình
+  - Danh sách phiếu lương theo tháng/năm
+  - Chi tiết lương: cơ bản, OT, thưởng, khấu trừ, thực lãnh
+  - Gửi khiếu nại lương trực tiếp từ app
+- ✅ **Navigation Fix**:
+  - "Tính lương" button trong AdminDashboard hoạt động
+  - "Phiếu lương" menu trong EmployeeDashboard hoạt động
+- ✅ **Backend 100%**: Tất cả Salary API endpoints đã sẵn sàng
+
 ### v3.0.0 (2024-12-13) - Phase 3
 
 - ✅ **Timezone GMT+7**: Check-in/out hiển thị giờ Việt Nam thay vì UTC

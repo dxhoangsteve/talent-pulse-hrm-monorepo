@@ -112,6 +112,7 @@ export default function EmployeeDashboard() {
           <MenuItem 
             title="Phiếu lương" 
             icon={<Briefcase size={24} color="#F59E0B" />} 
+            onPress={() => navigation.navigate('MySalary')}
           />
           <MenuItem 
             title="Lịch làm việc" 

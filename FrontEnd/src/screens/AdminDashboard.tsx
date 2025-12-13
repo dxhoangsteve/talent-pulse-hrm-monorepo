@@ -100,6 +100,7 @@ export default function AdminDashboard({ navigation }: Props) {
             subtitle="Bảng lương tháng 12"
             icon={<DollarSign size={24} color="white" />}
             color={Colors.warning}
+            onPress={() => navigation.navigate('SalaryHistory')}
           />
           <ActionItem 
             title="Lịch sử chấm công" 
