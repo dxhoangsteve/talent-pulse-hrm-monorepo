@@ -16,7 +16,15 @@ namespace BaseSource.Data.Configurations
             builder.Property(x => x.WorkHours).HasPrecision(5, 2);
             builder.Property(x => x.OvertimeHours).HasPrecision(5, 2);
             builder.Property(x => x.Note).HasMaxLength(500);
-            builder.Property(x => x.CheckInLocation).HasMaxLength(200);
+            
+            // GPS fields
+            builder.Property(x => x.CheckInLatitude);
+            builder.Property(x => x.CheckInLongitude);
+            builder.Property(x => x.CheckInAccuracy);
+            builder.Property(x => x.CheckOutLatitude);
+            builder.Property(x => x.CheckOutLongitude);
+            builder.Property(x => x.CheckOutAccuracy);
+            builder.Property(x => x.IsMockedLocation).HasDefaultValue(false);
 
             // Employee relationship
             builder.HasOne(x => x.Employee)
@@ -28,6 +36,8 @@ namespace BaseSource.Data.Configurations
             builder.HasIndex(x => new { x.EmployeeId, x.Date }).IsUnique();
             builder.HasIndex(x => x.Date);
             builder.HasIndex(x => x.Status);
+            builder.HasIndex(x => x.IsMockedLocation);
         }
     }
 }
+

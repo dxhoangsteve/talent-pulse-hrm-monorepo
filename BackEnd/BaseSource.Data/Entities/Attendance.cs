@@ -33,8 +33,28 @@ namespace BaseSource.Data.Entities
         /// <summary>Ghi chú</summary>
         public string? Note { get; set; }
         
-        /// <summary>Địa điểm check-in (IP/GPS)</summary>
-        public string? CheckInLocation { get; set; }
+        // Check-in GPS Location
+        /// <summary>Latitude check-in</summary>
+        public double? CheckInLatitude { get; set; }
+        
+        /// <summary>Longitude check-in</summary>
+        public double? CheckInLongitude { get; set; }
+        
+        /// <summary>GPS Accuracy check-in (meters)</summary>
+        public double? CheckInAccuracy { get; set; }
+        
+        // Check-out GPS Location
+        /// <summary>Latitude check-out</summary>
+        public double? CheckOutLatitude { get; set; }
+        
+        /// <summary>Longitude check-out</summary>
+        public double? CheckOutLongitude { get; set; }
+        
+        /// <summary>GPS Accuracy check-out (meters)</summary>
+        public double? CheckOutAccuracy { get; set; }
+        
+        /// <summary>Phát hiện vị trí giả (mocked)</summary>
+        public bool IsMockedLocation { get; set; } = false;
         
         public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedTime { get; set; }
@@ -43,3 +63,4 @@ namespace BaseSource.Data.Entities
         public Employee Employee { get; set; } = null!;
     }
 }
+
