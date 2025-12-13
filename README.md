@@ -194,6 +194,20 @@ Scan QR code bằng Expo Go app trên điện thoại hoặc nhấn `a` để m�
 
 ## Changelog
 
+### v3.0.0 (2024-12-13) - Phase 3
+
+- ✅ **Timezone GMT+7**: Check-in/out hiển thị giờ Việt Nam thay vì UTC
+- ✅ **Department Constraints**:
+  - Một người chỉ làm trưởng phòng 1 phòng ban
+  - Một người chỉ làm phó phòng 1 phòng ban
+  - Nhân viên chỉ thuộc 1 phòng ban
+- ✅ **Search Manager/Deputy**: Thêm ô tìm kiếm khi chọn trưởng/phó phòng
+- ✅ **Admin History Screens**:
+  - Lịch sử Nghỉ phép (filter phòng ban, status, paging)
+  - Lịch sử Tăng ca (filter phòng ban, status, paging)
+  - Lịch sử Lương (filter phòng ban, tháng/năm, xem khiếu nại)
+- ✅ **Text Render Fix**: Modal dropdown thay thế Picker component
+
 ### v2.0.0 (2024-12-13)
 
 - ✅ Fix Network Error cho Attendance
