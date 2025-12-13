@@ -10,6 +10,10 @@ namespace BaseSource.Services.Services.Attendance
     public class AttendanceService : IAttendanceService
     {
         private readonly BaseSourceDbContext _context;
+        
+        // Vietnam timezone: UTC+7
+        private static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
+        private static DateTime VietnamNow => DateTime.UtcNow.Add(VietnamOffset);
 
         public AttendanceService(BaseSourceDbContext context)
         {
@@ -35,7 +39,8 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không thể check-in với vị trí giả (mocked location)" };
                 }
 
-                var today = DateTime.UtcNow.Date;
+                var vietnamNow = VietnamNow;
+                var today = vietnamNow.Date;
 
                 // Check if already checked in today
                 var existingAttendance = await _context.Attendances
@@ -46,8 +51,7 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Bạn đã check-in hôm nay rồi" };
                 }
 
-                var now = DateTime.UtcNow;
-                var checkInTime = now.TimeOfDay;
+                var checkInTime = vietnamNow.TimeOfDay;
                 var standardStartTime = new TimeSpan(8, 0, 0); // 8:00 AM
 
                 // Determine status
@@ -69,7 +73,7 @@ namespace BaseSource.Services.Services.Attendance
                 attendance.CheckInAccuracy = request.Accuracy;
                 attendance.IsMockedLocation = request.IsMockedLocation;
                 attendance.Status = status;
-                attendance.UpdatedTime = now;
+                attendance.UpdatedTime = vietnamNow;
 
                 if (existingAttendance == null)
                 {
@@ -102,7 +106,8 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
                 }
 
-                var today = DateTime.UtcNow.Date;
+                var vietnamNow = VietnamNow;
+                var today = vietnamNow.Date;
                 var attendance = await _context.Attendances
                     .FirstOrDefaultAsync(a => a.EmployeeId == employee.Id && a.Date == today);
 
@@ -122,8 +127,7 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không thể check-out với vị trí giả (mocked location)" };
                 }
 
-                var now = DateTime.UtcNow;
-                var checkOutTime = now.TimeOfDay;
+                var checkOutTime = vietnamNow.TimeOfDay;
                 var standardEndTime = new TimeSpan(17, 0, 0); // 5:00 PM
 
                 attendance.CheckOutTime = checkOutTime;
@@ -158,7 +162,7 @@ namespace BaseSource.Services.Services.Attendance
                     attendance.OvertimeHours = (decimal)otHours;
                 }
 
-                attendance.UpdatedTime = now;
+                attendance.UpdatedTime = vietnamNow;
                 await _context.SaveChangesAsync();
 
                 return new ApiResult<AttendanceVm>
@@ -185,7 +189,7 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<TodayAttendanceVm> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
                 }
 
-                var today = DateTime.UtcNow.Date;
+                var today = VietnamNow.Date;
                 var attendance = await _context.Attendances
                     .FirstOrDefaultAsync(a => a.EmployeeId == employee.Id && a.Date == today);
 
