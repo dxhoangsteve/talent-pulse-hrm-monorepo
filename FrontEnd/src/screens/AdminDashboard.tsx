@@ -10,7 +10,8 @@ import {
   LogOut,
   Bell,
   Menu,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -99,6 +100,13 @@ export default function AdminDashboard({ navigation }: Props) {
             subtitle="Bảng lương tháng 12"
             icon={<DollarSign size={24} color="white" />}
             color={Colors.warning}
+          />
+          <ActionItem 
+            title="Lịch sử chấm công" 
+            subtitle="Xem chấm công nhân viên"
+            icon={<Clock size={24} color="white" />}
+            color="#10B981"
+            onPress={() => navigation.navigate('AttendanceHistory')}
           />
         </View>
       </ScrollView>

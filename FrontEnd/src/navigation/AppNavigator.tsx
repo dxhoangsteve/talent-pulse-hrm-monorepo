@@ -17,6 +17,7 @@ import OTRequestScreen from '../screens/OTRequestScreen';
 import ApprovalScreen from '../screens/ApprovalScreen';
 import DepartmentManagementScreen from '../screens/DepartmentManagementScreen';
 import AttendanceScreen from '../screens/AttendanceScreen';
+import AttendanceHistoryScreen from '../screens/AttendanceHistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -45,12 +46,14 @@ export default function AppNavigator() {
             <Stack.Screen name="ApprovalScreen" component={ApprovalScreen} />
             <Stack.Screen name="DepartmentManagement" component={DepartmentManagementScreen} />
             <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} />
+            <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
           </>
         ) : isManager ? (
           <>
             <Stack.Screen name="ManagerDashboard" component={ManagerDashboard} />
             <Stack.Screen name="ApprovalScreen" component={ApprovalScreen} />
             <Stack.Screen name="AttendanceScreen" component={AttendanceScreen} />
+            <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
           </>
         ) : (
           <>
@@ -64,6 +67,7 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
 
 
 
