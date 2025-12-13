@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using BaseSource.API.Cofigurations;
 using BaseSource.Data.EF;
 using BaseSource.Data.Entities;
+using BaseSource.Data.Extensions;
 using BaseSource.Shared.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -77,3 +78,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

@@ -37,6 +37,12 @@ namespace BaseSource.ViewModels.User
         public decimal BaseSalary { get; set; }
 
         /// <summary>
+        /// Họ và tên nhân viên
+        /// </summary>
+        [MaxLength(100)]
+        public string? FullName { get; set; }
+
+        /// <summary>
         /// Phòng ban (tùy chọn - nhân viên có thể không thuộc phòng ban nào)
         /// </summary>
         public Guid? DepartmentId { get; set; }

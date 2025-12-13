@@ -45,30 +45,34 @@ namespace BaseSouce.Services.Services.User
             try
             {
                 var userName = model.UserName.ToLower();
-                var existingUser = await _context.Users
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => 
-                        (x.UserName!.ToLower() == userName || x.Email!.ToLower() == userName) 
-                        && x.IsActive);
-
+                
+                // Use UserManager instead of DbContext to avoid tracking issues
+                var existingUser = await _userManager.FindByNameAsync(userName);
                 if (existingUser == null)
                 {
-                    return new ApiErrorResult<LoginResponseVm>("Tài khoản không tồn tại");
+                    existingUser = await _userManager.FindByEmailAsync(userName);
                 }
 
-                var result = await _signInManager.PasswordSignInAsync(existingUser, model.Password, true, true);
-                
-                if (!result.Succeeded)
+                if (existingUser == null || !existingUser.IsActive)
                 {
-                    var error = result.IsLockedOut 
-                        ? "Tài khoản đã bị khóa." 
-                        : "Tài khoản hoặc mật khẩu không chính xác!";
-                    return new ApiErrorResult<LoginResponseVm>(error);
+                    _logger.LogWarning("Login failed: User '{UserName}' not found or inactive", userName);
+                    return new ApiErrorResult<LoginResponseVm>("Tài khoản không tồn tại hoặc đã bị khóa");
+                }
+
+                // Use CheckPasswordAsync instead of PasswordSignInAsync to avoid entity tracking issues
+                var passwordValid = await _userManager.CheckPasswordAsync(existingUser, model.Password);
+                
+                if (!passwordValid)
+                {
+                    _logger.LogWarning("Login failed: Invalid password for user '{UserName}'", userName);
+                    return new ApiErrorResult<LoginResponseVm>("Tài khoản hoặc mật khẩu không chính xác!");
                 }
 
                 var token = await GenerateJwtToken(existingUser);
                 var roles = await _userManager.GetRolesAsync(existingUser);
                 var role = roles.FirstOrDefault() ?? "Employee";
+
+                _logger.LogInformation("User '{UserName}' logged in successfully with role '{Role}'", userName, role);
 
                 return new ApiSuccessResult<LoginResponseVm>(new LoginResponseVm 
                 { 
@@ -78,7 +82,7 @@ namespace BaseSouce.Services.Services.User
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Authentication failed");
+                _logger.LogError(ex, "Authentication failed for user '{UserName}'", model.UserName);
                 return new ApiErrorResult<LoginResponseVm>("Đăng nhập thất bại!");
             }
         }
@@ -104,7 +108,7 @@ namespace BaseSouce.Services.Services.User
                     NormalizedEmail = model.UserName.ToUpper(),
                     NormalizedUserName = model.UserName.ToUpper(),
                     SecurityStamp = Guid.NewGuid().ToString(),
-                    FullName = model.UserName,
+                    FullName = model.FullName ?? model.UserName,
                     IsActive = true,
                     CreatedTime = DateTime.UtcNow,
                     BaseSalary = model.BaseSalary,
@@ -121,6 +125,25 @@ namespace BaseSouce.Services.Services.User
 
                 // Add default Employee role
                 await _userManager.AddToRoleAsync(user, "Employee");
+
+                // Create corresponding Employee record for attendance/leave/salary features
+                var employee = new Employee
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    EmployeeCode = $"EMP{DateTime.UtcNow:yyyyMMddHHmmss}",
+                    FullName = model.FullName ?? model.UserName,
+                    Email = model.UserName,
+                    UserId = user.Id,
+                    BaseSalary = model.BaseSalary,
+                    DepartmentId = model.DepartmentId,
+                    JoinDate = DateTime.UtcNow,
+                    CreatedTime = DateTime.UtcNow
+                };
+
+                _context.Employees.Add(employee);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Created user {UserName} with Employee {EmployeeId}", model.UserName, employee.Id);
 
                 return new KeyValuePair<bool, string>(true, string.Empty);
             }

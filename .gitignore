@@ -420,3 +420,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 implementation_plan.md.resolved
+BackEnd/Scripts/SeedMockData.sql
