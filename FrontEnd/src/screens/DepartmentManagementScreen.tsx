@@ -24,6 +24,7 @@ export default function DepartmentManagementScreen({ navigation }: Props) {
   // User picker for leadership
   const [showUserPicker, setShowUserPicker] = useState(false);
   const [pickerType, setPickerType] = useState<'manager' | 'deputy'>('manager');
+  const [leaderSearchQuery, setLeaderSearchQuery] = useState('');
 
   // Employee management modal
   const [showEmployeesModal, setShowEmployeesModal] = useState(false);
@@ -65,6 +66,7 @@ export default function DepartmentManagementScreen({ navigation }: Props) {
 
   const openUserPicker = (type: 'manager' | 'deputy') => {
     setPickerType(type);
+    setLeaderSearchQuery('');
     setShowUserPicker(true);
   };
 
@@ -304,8 +306,21 @@ export default function DepartmentManagementScreen({ navigation }: Props) {
               </TouchableOpacity>
             </View>
 
+            {/* Search Input */}
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Tìm theo tên hoặc email..."
+              value={leaderSearchQuery}
+              onChangeText={setLeaderSearchQuery}
+              autoCapitalize="none"
+            />
+
             <FlatList
-              data={users}
+              data={users.filter(u => 
+                leaderSearchQuery === '' ||
+                u.fullName.toLowerCase().includes(leaderSearchQuery.toLowerCase()) ||
+                (u.email?.toLowerCase() || '').includes(leaderSearchQuery.toLowerCase())
+              )}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.userItem} onPress={() => selectUser(item)}>

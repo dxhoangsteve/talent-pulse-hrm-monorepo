@@ -117,6 +117,28 @@ namespace BaseSource.Services.Services.Department
                     return new ApiErrorResult<bool>("Trưởng phòng và Phó phòng không được là cùng một người");
                 }
 
+                // Validate: New manager cannot already be manager of another department
+                if (!string.IsNullOrEmpty(model.ManagerId) && model.ManagerId != department.ManagerId)
+                {
+                    var existingManagedDept = await _context.Departments
+                        .FirstOrDefaultAsync(d => d.ManagerId == model.ManagerId && d.Id != departmentId);
+                    if (existingManagedDept != null)
+                    {
+                        return new ApiErrorResult<bool>("Người này đã là Trưởng phòng của phòng ban khác");
+                    }
+                }
+
+                // Validate: New deputy cannot already be deputy of another department
+                if (!string.IsNullOrEmpty(model.DeputyId) && model.DeputyId != department.DeputyId)
+                {
+                    var existingDeputyDept = await _context.Departments
+                        .FirstOrDefaultAsync(d => d.DeputyId == model.DeputyId && d.Id != departmentId);
+                    if (existingDeputyDept != null)
+                    {
+                        return new ApiErrorResult<bool>("Người này đã là Phó phòng của phòng ban khác");
+                    }
+                }
+
                 // Update old manager's position
                 if (department.Manager != null && department.ManagerId != model.ManagerId)
                 {
