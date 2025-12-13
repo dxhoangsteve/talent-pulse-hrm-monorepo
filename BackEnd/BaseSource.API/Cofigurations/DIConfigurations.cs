@@ -1,7 +1,9 @@
 ﻿using BaseSouce.Services.Services.User;
 using BaseSource.Data.Entities;
+using BaseSource.Services.Services.Attendance;
 using BaseSource.Services.Services.LeaveRequest;
 using BaseSource.Services.Services.OvertimeRequest;
+using BaseSource.Services.Services.Salary;
 using Microsoft.AspNetCore.Identity;
 
 namespace BaseSource.API.Cofigurations
@@ -20,8 +22,11 @@ namespace BaseSource.API.Cofigurations
             services.AddTransient<BaseSource.Services.Services.Department.IDepartmentService, BaseSource.Services.Services.Department.DepartmentService>();
             services.AddTransient<ILeaveRequestService, LeaveRequestService>();
             services.AddTransient<IOvertimeRequestService, OvertimeRequestService>();
+            services.AddTransient<IAttendanceService, AttendanceService>();
+            services.AddTransient<ISalaryService, SalaryService>();
 
             return services;
         }
     }
 }
+
