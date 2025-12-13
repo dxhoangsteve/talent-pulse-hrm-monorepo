@@ -4,30 +4,27 @@ using System;
 namespace BaseSource.Data.Entities
 {
     /// <summary>
-    /// Đơn xin OT (làm thêm giờ)
+    /// Đơn xin nghỉ phép
     /// </summary>
-    public class OvertimeRequest
+    public class LeaveRequest
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         
         public string EmployeeId { get; set; } = string.Empty;
         
-        /// <summary>Ngày OT</summary>
-        public DateTime OTDate { get; set; }
+        /// <summary>Loại nghỉ phép</summary>
+        public LeaveType LeaveType { get; set; }
         
-        /// <summary>Giờ bắt đầu</summary>
-        public TimeSpan StartTime { get; set; }
+        /// <summary>Ngày bắt đầu</summary>
+        public DateTime StartDate { get; set; }
         
-        /// <summary>Giờ kết thúc</summary>
-        public TimeSpan EndTime { get; set; }
+        /// <summary>Ngày kết thúc</summary>
+        public DateTime EndDate { get; set; }
         
-        /// <summary>Tổng số giờ OT</summary>
-        public decimal Hours { get; set; }
+        /// <summary>Tổng số ngày nghỉ</summary>
+        public decimal TotalDays { get; set; }
         
-        /// <summary>Hệ số OT (1.5x, 2x, 3x)</summary>
-        public decimal Multiplier { get; set; } = 1.5m;
-        
-        /// <summary>Lý do OT</summary>
+        /// <summary>Lý do nghỉ</summary>
         public string? Reason { get; set; }
         
         /// <summary>Trạng thái</summary>

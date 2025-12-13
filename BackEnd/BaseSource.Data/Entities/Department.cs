@@ -1,18 +1,35 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BaseSource.Data.Entities
 {
+    [Table("Departments")]
     public class Department
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        [Key]
+        public Guid Id { get; set; }
+
+        [Required]
+        [MaxLength(255)]
         public string Name { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
+
+        // Leadership
         public string? ManagerId { get; set; }
-        public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedTime { get; set; }
+        [ForeignKey("ManagerId")]
+        public virtual AppUser? Manager { get; set; }
+
+        public string? DeputyId { get; set; }
+        [ForeignKey("DeputyId")]
+        public virtual AppUser? Deputy { get; set; }
 
         // Navigation
-        public ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        public virtual ICollection<AppUser> Users { get; set; } = new List<AppUser>();
+
+        public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
+        public string? CreatedBy { get; set; }
     }
 }
