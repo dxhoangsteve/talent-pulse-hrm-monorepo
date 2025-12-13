@@ -26,6 +26,11 @@ namespace BaseSource.Services.Services.OvertimeRequest
         Task<ApiResult<List<OvertimeRequestListVm>>> GetPendingForApprovalAsync(string approverId);
 
         /// <summary>
+        /// Lấy tất cả đơn OT - Admin (với filter phòng ban, status, paging)
+        /// </summary>
+        Task<ApiResult<PagedResult<OvertimeRequestListVm>>> GetAllAsync(Guid? departmentId, BaseSource.Shared.Enums.RequestStatus? status, int page, int pageSize);
+
+        /// <summary>
         /// Duyệt đơn OT
         /// </summary>
         Task<ApiResult<bool>> ApproveAsync(string requestId, string approverId);

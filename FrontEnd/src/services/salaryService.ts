@@ -86,8 +86,15 @@ export const salaryService = {
     return response.data;
   },
 
-  getAllSalary: async (month: number, year: number): Promise<ApiResult<SalaryVm[]>> => {
-    const response = await apiClient.get(`/salary?month=${month}&year=${year}`);
+  getAllSalary: async (month: number, year: number, departmentId?: string, page = 1, pageSize = 20): Promise<ApiResult<{ items: SalaryVm[]; totalCount: number; pageIndex: number; pageSize: number; totalPages: number }>> => {
+    const params = new URLSearchParams();
+    params.append('month', month.toString());
+    params.append('year', year.toString());
+    if (departmentId) params.append('departmentId', departmentId);
+    params.append('page', page.toString());
+    params.append('pageSize', pageSize.toString());
+    
+    const response = await apiClient.get(`/salary?${params}`);
     return response.data;
   },
 

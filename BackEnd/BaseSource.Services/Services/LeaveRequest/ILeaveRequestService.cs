@@ -26,6 +26,11 @@ namespace BaseSource.Services.Services.LeaveRequest
         Task<ApiResult<List<LeaveRequestListVm>>> GetPendingForApprovalAsync(string approverId);
 
         /// <summary>
+        /// Lấy tất cả đơn nghỉ phép - Admin (với filter phòng ban, status, paging)
+        /// </summary>
+        Task<ApiResult<PagedResult<LeaveRequestListVm>>> GetAllAsync(Guid? departmentId, BaseSource.Shared.Enums.RequestStatus? status, int page, int pageSize);
+
+        /// <summary>
         /// Duyệt đơn nghỉ phép
         /// </summary>
         Task<ApiResult<bool>> ApproveAsync(string requestId, string approverId);

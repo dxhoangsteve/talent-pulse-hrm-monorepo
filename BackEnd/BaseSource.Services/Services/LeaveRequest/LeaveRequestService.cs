@@ -147,6 +147,58 @@ namespace BaseSource.Services.Services.LeaveRequest
             return new ApiSuccessResult<List<LeaveRequestListVm>>(result);
         }
 
+        public async Task<ApiResult<PagedResult<LeaveRequestListVm>>> GetAllAsync(Guid? departmentId, RequestStatus? status, int page, int pageSize)
+        {
+            try
+            {
+                var query = _context.LeaveRequests
+                    .Include(r => r.Employee)
+                        .ThenInclude(e => e.User)
+                            .ThenInclude(u => u.Department)
+                    .Include(r => r.ApprovedByUser)
+                    .AsQueryable();
+
+                // Filter by department if specified
+                if (departmentId.HasValue)
+                {
+                    query = query.Where(r => r.Employee.User != null && r.Employee.User.DepartmentId == departmentId);
+                }
+
+                // Filter by status if specified
+                if (status.HasValue)
+                {
+                    query = query.Where(r => r.Status == status.Value);
+                }
+
+                var totalCount = await query.CountAsync();
+
+                var requests = await query
+                    .OrderByDescending(r => r.CreatedTime)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var items = requests.Select(MapToListVm).ToList();
+
+                var pagedResult = new PagedResult<LeaveRequestListVm>
+                {
+                    Items = items,
+                    PageIndex = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                };
+
+                return new ApiSuccessResult<PagedResult<LeaveRequestListVm>>(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all leave requests");
+                return new ApiErrorResult<PagedResult<LeaveRequestListVm>>("Lấy danh sách đơn nghỉ phép thất bại");
+            }
+        }
+
+
         public async Task<ApiResult<bool>> ApproveAsync(string requestId, string approverId)
         {
             try

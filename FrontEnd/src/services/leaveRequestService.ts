@@ -42,6 +42,33 @@ export const leaveRequestService = {
     }
   },
 
+  // Get all leave requests (Admin only) with filters
+  getAllRequests: async (params?: {
+    departmentId?: string;
+    status?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResult<{ items: LeaveRequestItem[]; totalCount: number; pageIndex: number; pageSize: number; totalPages: number }>> => {
+    try {
+      const headers = await getAuthHeaders();
+      const queryParams = new URLSearchParams();
+      if (params?.departmentId) queryParams.append('departmentId', params.departmentId);
+      if (params?.status !== undefined) queryParams.append('status', params.status.toString());
+      if (params?.page) queryParams.append('page', params.page.toString());
+      if (params?.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+      
+      const url = `${API_CONFIG.API_URL}/leave-requests/all${queryParams.toString() ? `?${queryParams}` : ''}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Get all leave requests error:', error);
+      return { isSuccessed: false, message: 'Không thể tải danh sách đơn nghỉ phép' };
+    }
+  },
+
   // Get pending requests for approval
   getPendingForApproval: async (): Promise<ApiResult<LeaveRequestItem[]>> => {
     try {

@@ -150,30 +150,51 @@ namespace BaseSource.Services.Services.Salary
             }
         }
 
-        public async Task<ApiResult<List<SalaryVm>>> GetAllSalaryAsync(int month, int year)
+        public async Task<ApiResult<PagedResult<SalaryVm>>> GetAllSalaryAsync(int month, int year, Guid? departmentId = null, int page = 1, int pageSize = 20)
         {
             try
             {
-                var salaries = await _context.Salaries
+                var query = _context.Salaries
                     .Include(s => s.Employee)
                         .ThenInclude(e => e.Department)
                     .Include(s => s.ApprovedByUser)
                     .Include(s => s.PaidByUser)
-                    .Where(s => s.Month == month && s.Year == year)
-                    .OrderBy(s => s.Employee.FullName)
-                    .ToListAsync();
+                    .Where(s => s.Month == month && s.Year == year);
 
-                var result = new List<SalaryVm>();
-                foreach (var s in salaries)
+                // Filter by department if specified
+                if (departmentId.HasValue)
                 {
-                    result.Add(await MapToVmAsync(s));
+                    query = query.Where(s => s.Employee.DepartmentId == departmentId);
                 }
 
-                return new ApiResult<List<SalaryVm>> { IsSuccessed = true, ResultObj = result };
+                var totalCount = await query.CountAsync();
+
+                var salaries = await query
+                    .OrderBy(s => s.Employee.FullName)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var items = new List<SalaryVm>();
+                foreach (var s in salaries)
+                {
+                    items.Add(await MapToVmAsync(s));
+                }
+
+                var pagedResult = new PagedResult<SalaryVm>
+                {
+                    Items = items,
+                    PageIndex = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                };
+
+                return new ApiSuccessResult<PagedResult<SalaryVm>>(pagedResult);
             }
             catch (Exception ex)
             {
-                return new ApiResult<List<SalaryVm>> { IsSuccessed = false, Message = ex.Message };
+                return new ApiErrorResult<PagedResult<SalaryVm>>(ex.Message);
             }
         }
 

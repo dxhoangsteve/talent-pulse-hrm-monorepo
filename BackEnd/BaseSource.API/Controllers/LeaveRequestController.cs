@@ -1,4 +1,5 @@
 using BaseSource.Services.Services.LeaveRequest;
+using BaseSource.Shared.Enums;
 using BaseSource.ViewModels.Common;
 using BaseSource.ViewModels.LeaveRequest;
 using Microsoft.AspNetCore.Authorization;
@@ -61,6 +62,21 @@ namespace BaseSource.API.Controllers
             {
                 return NotFound(result);
             }
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy tất cả đơn nghỉ phép - Admin (với filter phòng ban, status, paging)
+        /// </summary>
+        [HttpGet("all")]
+        [Authorize(Roles = "SuperAdmin,Admin,HR")]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] Guid? departmentId = null,
+            [FromQuery] RequestStatus? status = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _leaveRequestService.GetAllAsync(departmentId, status, page, pageSize);
             return Ok(result);
         }
 

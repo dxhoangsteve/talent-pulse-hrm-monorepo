@@ -45,13 +45,18 @@ namespace BaseSource.API.Controllers
         }
 
         /// <summary>
-        /// Lấy tất cả phiếu lương (Admin only)
+        /// Lấy tất cả phiếu lương (Admin only) - với filter phòng ban và paging
         /// </summary>
         [HttpGet]
         [Authorize(Roles = "SuperAdmin,Admin")]
-        public async Task<IActionResult> GetAllSalary([FromQuery] int month, [FromQuery] int year)
+        public async Task<IActionResult> GetAllSalary(
+            [FromQuery] int month, 
+            [FromQuery] int year,
+            [FromQuery] Guid? departmentId = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var result = await _salaryService.GetAllSalaryAsync(month, year);
+            var result = await _salaryService.GetAllSalaryAsync(month, year, departmentId, page, pageSize);
             return Ok(result);
         }
 
