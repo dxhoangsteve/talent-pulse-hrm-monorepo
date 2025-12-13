@@ -12,6 +12,8 @@ export type RootStackParamList = {
   ManagerDashboard: undefined;
   DepartmentEmployees: undefined;
   DepartmentSalary: undefined;
+  AttendanceScreen: undefined;
+  AttendanceHistory: undefined;
 };
 
 export interface DecodedToken {

@@ -29,6 +29,12 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
                 }
 
+                // Reject mocked location
+                if (request.IsMockedLocation)
+                {
+                    return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không thể check-in với vị trí giả (mocked location)" };
+                }
+
                 var today = DateTime.UtcNow.Date;
 
                 // Check if already checked in today
@@ -108,6 +114,12 @@ namespace BaseSource.Services.Services.Attendance
                 if (attendance.CheckOutTime.HasValue)
                 {
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Bạn đã check-out hôm nay rồi" };
+                }
+
+                // Reject mocked location
+                if (request.IsMockedLocation)
+                {
+                    return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không thể check-out với vị trí giả (mocked location)" };
                 }
 
                 var now = DateTime.UtcNow;

@@ -53,11 +53,14 @@ export default function EmployeeDashboard() {
             <Text style={styles.timerLabel}>Giờ hiện tại</Text>
           </View>
 
-          <TouchableOpacity style={styles.checkInButton}>
+          <TouchableOpacity 
+            style={styles.checkInButton}
+            onPress={() => navigation.navigate('AttendanceScreen')}
+          >
             <View style={styles.fingerprintIcon}>
                <Clock size={32} color="white" />
             </View>
-            <Text style={styles.checkInButtonText}>Chấm công vào</Text>
+            <Text style={styles.checkInButtonText}>Chấm công GPS</Text>
           </TouchableOpacity>
         </View>
 
