@@ -20,7 +20,9 @@ TalentPulse là giải pháp quản lý nhân sự (HRM) toàn diện, xây dự
 
 ### 👤 Dành cho Nhân viên
 
-- **Chấm công GPS** - Check-in/out dựa trên vị trí thực, chống fake location
+- **Chấm công GPS** - Check-in/out dựa trên vị trí thực, chống fake location.
+  > **Lưu ý**: Khi check-in, nhân viên cần ở gần vị trí máy chủ (hoặc công ty) được cấu hình. Nếu ở quá xa, hệ thống sẽ báo lỗi.
+
 - **Xem lịch sử chấm công** - Theo dõi số ngày làm, đi muộn, nghỉ phép
 - **Gửi đơn nghỉ phép** - Sử dụng **Date Picker** để chọn ngày (không cần nhập tay)
 - **Đăng ký làm thêm giờ** - Date & Time Picker, hệ số lương tự động (1.5x, 2x, 3x)
