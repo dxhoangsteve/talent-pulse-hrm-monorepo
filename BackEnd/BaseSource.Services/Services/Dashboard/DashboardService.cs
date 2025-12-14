@@ -6,6 +6,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
+using BaseSource.Shared.Enums;
+
 namespace BaseSource.Services.Services.Dashboard
 {
     public class DashboardService : IDashboardService
@@ -25,15 +27,15 @@ namespace BaseSource.Services.Services.Dashboard
 
             try
             {
-                var totalUsers = await _context.Users.CountAsync(u => !u.IsDeleted);
+                var totalUsers = await _context.Users.CountAsync(u => u.DeletedTime == null);
                 var totalDepartments = await _context.Departments.CountAsync();
 
                 // Pending Leave Requests (Status = 0)
-                var pendingLeaves = await _context.LeaveRequests.CountAsync(l => l.Status == 0);
+                var pendingLeaves = await _context.LeaveRequests.CountAsync(l => l.Status == RequestStatus.Pending);
 
                 // Total Salary Paid This Month (Status = 3)
                 var totalSalary = await _context.Salaries
-                    .Where(s => s.Month == currentMonth && s.Year == currentYear && s.Status == 3) // Paid
+                    .Where(s => s.Month == currentMonth && s.Year == currentYear && s.Status == SalaryStatus.Paid) // Paid
                     .SumAsync(s => s.NetSalary);
 
                 var stats = new AdminDashboardStats
