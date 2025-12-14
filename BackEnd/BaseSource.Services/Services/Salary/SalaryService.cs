@@ -4,6 +4,8 @@ using BaseSource.ViewModels.Common;
 using BaseSource.ViewModels.Salary;
 using Microsoft.EntityFrameworkCore;
 
+using BaseSource.Shared.Helpers;
+
 namespace BaseSource.Services.Services.Salary
 {
     public class SalaryService : ISalaryService
@@ -16,6 +18,16 @@ namespace BaseSource.Services.Services.Salary
         }
 
         public async Task<ApiResult<SalaryVm>> CalculateSalaryAsync(string adminId, CalculateSalaryRequest request)
+        {
+            return await CalculateSalaryInternalAsync(adminId, request, saveToDb: true);
+        }
+
+        public async Task<ApiResult<SalaryVm>> CalculateSalaryPreviewAsync(string adminId, CalculateSalaryRequest request)
+        {
+            return await CalculateSalaryInternalAsync(adminId, request, saveToDb: false);
+        }
+
+        private async Task<ApiResult<SalaryVm>> CalculateSalaryInternalAsync(string adminId, CalculateSalaryRequest request, bool saveToDb)
         {
             try
             {
@@ -32,10 +44,16 @@ namespace BaseSource.Services.Services.Salary
                 var existingSalary = await _context.Salaries
                     .FirstOrDefaultAsync(s => s.EmployeeId == request.EmployeeId && s.Month == request.Month && s.Year == request.Year);
 
+                if (!saveToDb && existingSalary != null)
+                {
+                    // If previewing but salary exists, we might want to return the updated calculation or the existing one?
+                    // Let's assume preview recalculates based on current attendance.
+                }
+
                 // Calculate attendance stats
                 var startDate = new DateTime(request.Year, request.Month, 1);
                 var endDate = startDate.AddMonths(1);
-                
+
                 var attendances = await _context.Attendances
                     .Where(a => a.EmployeeId == request.EmployeeId && a.Date >= startDate && a.Date < endDate)
                     .ToListAsync();
@@ -48,24 +66,26 @@ namespace BaseSource.Services.Services.Salary
 
                 // Calculate salary components
                 decimal baseSalary = employee.BaseSalary;
-                decimal dailyRate = baseSalary / workDays;
+                decimal dailyRate = workDays > 0 ? baseSalary / workDays : 0;
                 decimal actualBasePay = dailyRate * actualWorkDays;
-                
+
                 decimal otRate = dailyRate / 8 * 1.5m; // 1.5x hourly rate for OT
                 decimal overtimePay = otRate * totalOTHours;
-                
+
                 decimal bonus = request.Bonus ?? 0;
                 decimal allowance = request.Allowance ?? 0;
                 decimal deductions = request.Deductions ?? 0;
-                
-                // Late/early deduction (50k per incident)
-                deductions += (lateDays + earlyLeaveDays) * 50000;
-                
+
+                // User requested to remove deductions ("khấu trừ")
+                // decimal autoDeductions = (lateDays + earlyLeaveDays) * 50000;
+                // decimal totalDeductions = (request.Deductions ?? 0) + autoDeductions;
+                decimal totalDeductions = 0;
+
                 decimal insurance = baseSalary * 0.105m; // 10.5% insurance
-                decimal taxableIncome = actualBasePay + overtimePay + bonus + allowance - deductions - insurance;
+                decimal taxableIncome = actualBasePay + overtimePay + bonus + allowance - totalDeductions - insurance;
                 decimal tax = CalculateTax(taxableIncome);
-                
-                decimal netSalary = actualBasePay + overtimePay + bonus + allowance - deductions - insurance - tax;
+
+                decimal netSalary = actualBasePay + overtimePay + bonus + allowance - totalDeductions - insurance - tax;
 
                 var salary = existingSalary ?? new Data.Entities.Salary
                 {
@@ -82,20 +102,27 @@ namespace BaseSource.Services.Services.Salary
                 salary.OvertimePay = overtimePay;
                 salary.Bonus = bonus;
                 salary.Allowance = allowance;
-                salary.Deductions = deductions;
+                salary.Deductions = totalDeductions;
                 salary.Insurance = insurance;
                 salary.Tax = tax;
                 salary.NetSalary = Math.Max(0, netSalary);
-                salary.Status = SalaryStatus.Pending;
+                salary.Status = existingSalary?.Status ?? SalaryStatus.Pending; // Keep existing status if exists
                 salary.Note = request.Note;
-                salary.UpdatedTime = DateTime.UtcNow;
+                salary.UpdatedTime = TimeHelper.VietnamNow;
 
-                if (existingSalary == null)
+                if (saveToDb)
                 {
-                    _context.Salaries.Add(salary);
+                    if (existingSalary == null)
+                    {
+                        _context.Salaries.Add(salary);
+                    }
+                    await _context.SaveChangesAsync();
                 }
 
-                await _context.SaveChangesAsync();
+                // If not saving, we perform the Map manually since MapToVmAsync uses EF references that might be loose?
+                // Actually MapToVmAsync fetches Employee again. 
+                // We can just return the mapped object.
+                // Note: IF not saving, salary.Id is 0. MapToVmAsync should handle it.
 
                 return new ApiResult<SalaryVm>
                 {
@@ -242,8 +269,8 @@ namespace BaseSource.Services.Services.Salary
 
                 salary.Status = SalaryStatus.Approved;
                 salary.ApprovedBy = adminId;
-                salary.ApprovedTime = DateTime.UtcNow;
-                salary.UpdatedTime = DateTime.UtcNow;
+                salary.ApprovedTime = TimeHelper.VietnamNow;
+                salary.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
@@ -272,10 +299,50 @@ namespace BaseSource.Services.Services.Salary
 
                 salary.Status = SalaryStatus.Paid;
                 salary.PaidBy = adminId;
-                salary.PaidTime = DateTime.UtcNow;
+                salary.PaidTime = TimeHelper.VietnamNow;
                 salary.Note = string.IsNullOrEmpty(note) ? salary.Note : note;
-                salary.UpdatedTime = DateTime.UtcNow;
+                salary.UpdatedTime = TimeHelper.VietnamNow;
 
+                await _context.SaveChangesAsync();
+
+                return new ApiResult<bool> { IsSuccessed = true, ResultObj = true };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResult<bool> { IsSuccessed = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ApiResult<bool>> ConfirmSalaryAsync(string userId, string salaryId, bool isConfirmed, string? note)
+        {
+            try
+            {
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == userId);
+                if (employee == null) return new ApiResult<bool> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
+
+                var salary = await _context.Salaries.FindAsync(salaryId);
+                if (salary == null) return new ApiResult<bool> { IsSuccessed = false, Message = "Không tìm thấy phiếu lương" };
+
+                if (salary.EmployeeId != employee.Id) return new ApiResult<bool> { IsSuccessed = false, Message = "Bạn không có quyền truy cập phiếu lương này" };
+
+                if (salary.Status != SalaryStatus.Paid && salary.Status != SalaryStatus.Complaining)
+                {
+                    return new ApiResult<bool> { IsSuccessed = false, Message = "Chỉ có thể xác nhận phiếu lương đã được thanh toán" };
+                }
+
+                if (isConfirmed)
+                {
+                    salary.Status = SalaryStatus.Confirmed;
+                    salary.Note = note; // Feedback note if any
+                }
+                else
+                {
+                    salary.Status = SalaryStatus.Complaining;
+                    // Note is required for complaining? Maybe handled separately via Complaint ticket, but here we just mark status.
+                    if (!string.IsNullOrEmpty(note)) salary.Note = note;
+                }
+
+                salary.UpdatedTime = TimeHelper.VietnamNow;
                 await _context.SaveChangesAsync();
 
                 return new ApiResult<bool> { IsSuccessed = true, ResultObj = true };
@@ -392,6 +459,8 @@ namespace BaseSource.Services.Services.Salary
                 SalaryStatus.Pending => "Chờ duyệt",
                 SalaryStatus.Approved => "Đã duyệt",
                 SalaryStatus.Paid => "Đã phát",
+                SalaryStatus.Confirmed => "Đã nhận",
+                SalaryStatus.Complaining => "Đang khiếu nại",
                 SalaryStatus.Cancelled => "Đã hủy",
                 _ => "N/A"
             };
@@ -423,7 +492,7 @@ namespace BaseSource.Services.Services.Salary
                 decimal taxableIncome = salary.BaseSalary + salary.OvertimePay + salary.Bonus + salary.Allowance - salary.Deductions - salary.Insurance;
                 salary.Tax = CalculateTax(taxableIncome);
                 salary.NetSalary = Math.Max(0, taxableIncome - salary.Tax);
-                salary.UpdatedTime = DateTime.UtcNow;
+                salary.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
@@ -467,7 +536,7 @@ namespace BaseSource.Services.Services.Salary
                     Content = request.Content,
                     SalarySlipId = request.SalarySlipId,
                     Status = ComplaintStatus.Pending,
-                    CreatedTime = DateTime.UtcNow
+                    CreatedTime = TimeHelper.VietnamNow
                 };
 
                 _context.SalaryComplaints.Add(complaint);
@@ -556,7 +625,7 @@ namespace BaseSource.Services.Services.Salary
                 complaint.Status = request.Status;
                 complaint.Response = request.Response;
                 complaint.ResolvedById = adminId;
-                complaint.ResolvedTime = DateTime.UtcNow;
+                complaint.ResolvedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
