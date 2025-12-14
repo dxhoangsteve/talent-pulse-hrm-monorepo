@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
-import { 
+import {
   LogOut,
   Bell,
   Clock,
@@ -25,7 +25,7 @@ export default function EmployeeDashboard() {
   const navigation = useNavigation<NavigationProp>();
   const [paidSalary, setPaidSalary] = useState<SalaryVm | null>(null);
   const [showSalaryNotify, setShowSalaryNotify] = useState(false);
-  
+
   useEffect(() => {
     checkPaidSalary();
   }, []);
@@ -37,8 +37,22 @@ export default function EmployeeDashboard() {
       setShowSalaryNotify(true);
     }
   };
-  
+
   const today = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  /* Real-time Clock */
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('vi-VN', { hour12: false });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,19 +92,19 @@ export default function EmployeeDashboard() {
         {/* Check-in Card */}
         <View style={styles.checkInCard}>
           <Text style={styles.dateText}>{today}</Text>
-          <Text style={styles.shiftText}>Ca làm việc: 08:00 - 17:00</Text>
-          
+          {/* <Text style={styles.shiftText}>Ca làm việc: 08:00 - 17:00</Text> */}
+
           <View style={styles.timerContainer}>
-            <Text style={styles.timerText}>08:30:45</Text>
+            <Text style={styles.timerText}>{formatTime(currentTime)}</Text>
             <Text style={styles.timerLabel}>Giờ hiện tại</Text>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.checkInButton}
             onPress={() => navigation.navigate('AttendanceScreen')}
           >
             <View style={styles.fingerprintIcon}>
-               <Clock size={32} color="white" />
+              <Clock size={32} color="white" />
             </View>
             <Text style={styles.checkInButtonText}>Chấm công GPS</Text>
           </TouchableOpacity>
@@ -99,44 +113,28 @@ export default function EmployeeDashboard() {
         {/* Menu Grid */}
         <Text style={styles.sectionTitle}>Tiện ích</Text>
         <View style={styles.menuGrid}>
-          <MenuItem 
-            title="Xin nghỉ phép" 
-            icon={<FileText size={24} color="#10B981" />} 
+          <MenuItem
+            title="Xin nghỉ phép"
+            icon={<FileText size={24} color="#10B981" />}
             onPress={() => navigation.navigate('LeaveRequest')}
           />
-          <MenuItem 
-            title="Đăng ký OT" 
-            icon={<Clock size={24} color="#6366F1" />} 
+          <MenuItem
+            title="Đăng ký OT"
+            icon={<Clock size={24} color="#6366F1" />}
             onPress={() => navigation.navigate('OTRequest')}
           />
-          <MenuItem 
-            title="Phiếu lương" 
-            icon={<Briefcase size={24} color="#F59E0B" />} 
+          <MenuItem
+            title="Phiếu lương"
+            icon={<Briefcase size={24} color="#F59E0B" />}
             onPress={() => navigation.navigate('MySalary')}
           />
-          <MenuItem 
-            title="Lịch làm việc" 
-            icon={<Calendar size={24} color="#EF4444" />} 
-          />
-        </View>
-        
-        {/* Recent Activity */}
-        <Text style={styles.sectionTitle}>Hoạt động gần đây</Text>
-        <View style={styles.activityList}>
-            <ActivityItem 
-                title="Chấm công ra"
-                time="17:05 - Hôm qua"
-                status="success"
-            />
-            <ActivityItem 
-                title="Đơn xin nghỉ"
-                time="10:30 - 11/12/2024"
-                status="pending"
-            />
         </View>
 
+        {/* Recent Activity Removed as requested */}
+
       </ScrollView>
-    </SafeAreaView>
+
+    </SafeAreaView >
   );
 }
 
@@ -150,13 +148,13 @@ const MenuItem = ({ title, icon, onPress }: { title: string; icon: React.ReactNo
 );
 
 const ActivityItem = ({ title, time, status }: any) => (
-    <View style={styles.activityItem}>
-        <View style={styles.activityInfo}>
-            <Text style={styles.activityTitle}>{title}</Text>
-            <Text style={styles.activityTime}>{time}</Text>
-        </View>
-        <View style={[styles.statusDot, { backgroundColor: status === 'success' ? Colors.success : Colors.warning }]} />
+  <View style={styles.activityItem}>
+    <View style={styles.activityInfo}>
+      <Text style={styles.activityTitle}>{title}</Text>
+      <Text style={styles.activityTime}>{time}</Text>
     </View>
+    <View style={[styles.statusDot, { backgroundColor: status === 'success' ? Colors.success : Colors.warning }]} />
+  </View>
 )
 
 const styles = StyleSheet.create({
@@ -246,7 +244,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)',
   },
   fingerprintIcon: {
-      marginRight: Spacing.sm,
+    marginRight: Spacing.sm,
   },
   checkInButtonText: {
     color: 'white',
@@ -292,34 +290,34 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   activityList: {
-      backgroundColor: 'white',
-      borderRadius: BorderRadius.md,
-      padding: Spacing.md,
+    backgroundColor: 'white',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
   },
   activityItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: Spacing.sm,
-      borderBottomWidth: 1,
-      borderBottomColor: Colors.background,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.background,
   },
   activityInfo: {
-      
+
   },
   activityTitle: {
-      fontWeight: '600',
-      color: Colors.text,
-      fontSize: FontSize.sm,
+    fontWeight: '600',
+    color: Colors.text,
+    fontSize: FontSize.sm,
   },
   activityTime: {
-      color: Colors.textSecondary,
-      fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    fontSize: FontSize.xs,
   },
   statusDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   salaryNotify: {
     flexDirection: 'row',
