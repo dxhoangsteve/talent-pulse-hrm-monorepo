@@ -6,6 +6,8 @@ using BaseSource.ViewModels.LeaveRequest;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+using BaseSource.Shared.Helpers;
+
 namespace BaseSource.Services.Services.LeaveRequest
 {
     public class LeaveRequestService : ILeaveRequestService
@@ -51,7 +53,7 @@ namespace BaseSource.Services.Services.LeaveRequest
                     TotalDays = totalDays,
                     Reason = model.Reason,
                     Status = RequestStatus.Pending,
-                    CreatedTime = DateTime.UtcNow
+                    CreatedTime = TimeHelper.VietnamNow
                 };
 
                 _context.LeaveRequests.Add(leaveRequest);
@@ -227,8 +229,8 @@ namespace BaseSource.Services.Services.LeaveRequest
 
                 request.Status = RequestStatus.Approved;
                 request.ApprovedBy = approverId;
-                request.ApprovedTime = DateTime.UtcNow;
-                request.UpdatedTime = DateTime.UtcNow;
+                request.ApprovedTime = TimeHelper.VietnamNow;
+                request.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
@@ -268,9 +270,9 @@ namespace BaseSource.Services.Services.LeaveRequest
 
                 request.Status = RequestStatus.Rejected;
                 request.ApprovedBy = approverId;
-                request.ApprovedTime = DateTime.UtcNow;
+                request.ApprovedTime = TimeHelper.VietnamNow;
                 request.RejectReason = reason;
-                request.UpdatedTime = DateTime.UtcNow;
+                request.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
@@ -310,7 +312,7 @@ namespace BaseSource.Services.Services.LeaveRequest
                 }
 
                 request.Status = RequestStatus.Cancelled;
-                request.UpdatedTime = DateTime.UtcNow;
+                request.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 

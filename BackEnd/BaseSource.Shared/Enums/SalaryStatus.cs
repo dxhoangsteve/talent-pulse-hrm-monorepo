@@ -17,7 +17,13 @@ namespace BaseSource.Shared.Enums
         /// <summary>Đã thanh toán</summary>
         Paid = 3,
         
+        /// <summary>Đã nhận và đồng thuận</summary>
+        Confirmed = 4,
+
+        /// <summary>Đang khiếu nại</summary>
+        Complaining = 5,
+        
         /// <summary>Đã hủy</summary>
-        Cancelled = 4
+        Cancelled = 99
     }
 }

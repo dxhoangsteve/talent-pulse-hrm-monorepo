@@ -5,6 +5,7 @@ using BaseSource.ViewModels.Common;
 using BaseSource.ViewModels.OvertimeRequest;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using BaseSource.Shared.Helpers;
 
 namespace BaseSource.Services.Services.OvertimeRequest
 {
@@ -51,7 +52,7 @@ namespace BaseSource.Services.Services.OvertimeRequest
                     Multiplier = model.Multiplier,
                     Reason = model.Reason,
                     Status = RequestStatus.Pending,
-                    CreatedTime = DateTime.UtcNow
+                    CreatedTime = TimeHelper.VietnamNow
                 };
 
                 _context.OvertimeRequests.Add(otRequest);
@@ -221,8 +222,8 @@ namespace BaseSource.Services.Services.OvertimeRequest
 
                 request.Status = RequestStatus.Approved;
                 request.ApprovedBy = approverId;
-                request.ApprovedTime = DateTime.UtcNow;
-                request.UpdatedTime = DateTime.UtcNow;
+                request.ApprovedTime = TimeHelper.VietnamNow;
+                request.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
@@ -262,9 +263,9 @@ namespace BaseSource.Services.Services.OvertimeRequest
 
                 request.Status = RequestStatus.Rejected;
                 request.ApprovedBy = approverId;
-                request.ApprovedTime = DateTime.UtcNow;
+                request.ApprovedTime = TimeHelper.VietnamNow;
                 request.RejectReason = reason;
-                request.UpdatedTime = DateTime.UtcNow;
+                request.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 
@@ -304,7 +305,7 @@ namespace BaseSource.Services.Services.OvertimeRequest
                 }
 
                 request.Status = RequestStatus.Cancelled;
-                request.UpdatedTime = DateTime.UtcNow;
+                request.UpdatedTime = TimeHelper.VietnamNow;
 
                 await _context.SaveChangesAsync();
 

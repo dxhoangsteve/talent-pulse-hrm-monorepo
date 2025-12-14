@@ -24,13 +24,24 @@ namespace BaseSource.API.Controllers
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
         /// <summary>
-        /// Tính lương cho nhân viên (Admin only)
+        /// Tính lương (Admin)
         /// </summary>
         [HttpPost("calculate")]
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> CalculateSalary([FromBody] CalculateSalaryRequest request)
         {
             var result = await _salaryService.CalculateSalaryAsync(UserId, request);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Xem trước bảng tính lương (Admin)
+        /// </summary>
+        [HttpPost("preview-calculate")]
+        [Authorize(Roles = "SuperAdmin,Admin")]
+        public async Task<IActionResult> CalculateSalaryPreview([FromBody] CalculateSalaryRequest request)
+        {
+            var result = await _salaryService.CalculateSalaryPreviewAsync(UserId, request);
             return Ok(result);
         }
 
@@ -50,7 +61,7 @@ namespace BaseSource.API.Controllers
         [HttpGet]
         [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> GetAllSalary(
-            [FromQuery] int month, 
+            [FromQuery] int month,
             [FromQuery] int year,
             [FromQuery] Guid? departmentId = null,
             [FromQuery] int page = 1,
@@ -69,7 +80,7 @@ namespace BaseSource.API.Controllers
         {
             // Get the department this user manages
             var managedDeptId = await _departmentService.GetManagedDepartmentIdAsync(UserId);
-            
+
             if (managedDeptId == null)
             {
                 return Ok(new { IsSuccessed = false, Message = "Bạn không quản lý phòng ban nào" });
@@ -80,10 +91,10 @@ namespace BaseSource.API.Controllers
         }
 
         /// <summary>
-        /// Duyệt phiếu lương (Admin only)
+        /// Duyệt phiếu lương (Admin/Manager)
         /// </summary>
         [HttpPost("{id}/approve")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [Authorize(Roles = "SuperAdmin,Admin,Manager,DeputyManager")]
         public async Task<IActionResult> ApproveSalary(string id)
         {
             var result = await _salaryService.ApproveSalaryAsync(UserId, id);
@@ -91,10 +102,10 @@ namespace BaseSource.API.Controllers
         }
 
         /// <summary>
-        /// Phát lương (Admin only)
+        /// Phát lương (Admin/Manager)
         /// </summary>
         [HttpPost("{id}/pay")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [Authorize(Roles = "SuperAdmin,Admin,Manager,DeputyManager")]
         public async Task<IActionResult> PaySalary(string id, [FromBody] PaySalaryRequest? request)
         {
             var result = await _salaryService.PaySalaryAsync(UserId, id, request?.Note);
@@ -102,10 +113,20 @@ namespace BaseSource.API.Controllers
         }
 
         /// <summary>
+        /// Xác nhận lương (Employee)
+        /// </summary>
+        [HttpPost("{id}/confirm")]
+        public async Task<IActionResult> ConfirmSalary(string id, [FromBody] ConfirmSalaryRequest request)
+        {
+            var result = await _salaryService.ConfirmSalaryAsync(UserId, id, request.IsConfirmed, request.Note);
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Xem lịch sử phát lương
         /// </summary>
         [HttpGet("history")]
-        [Authorize(Roles = "SuperAdmin,Admin,HR")]
+        [Authorize(Roles = "SuperAdmin,Admin,HR,Manager,DeputyManager")]
         public async Task<IActionResult> GetPaymentHistory([FromQuery] SalaryHistoryQuery query)
         {
             var result = await _salaryService.GetPaymentHistoryAsync(query);
@@ -113,10 +134,10 @@ namespace BaseSource.API.Controllers
         }
 
         /// <summary>
-        /// Cập nhật thông tin lương (Admin only)
+        /// Cập nhật thông tin lương (Admin/Manager)
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        [Authorize(Roles = "SuperAdmin,Admin,Manager,DeputyManager")]
         public async Task<IActionResult> UpdateSalary(string id, [FromBody] UpdateSalaryRequest request)
         {
             var result = await _salaryService.UpdateSalaryAsync(UserId, id, request);

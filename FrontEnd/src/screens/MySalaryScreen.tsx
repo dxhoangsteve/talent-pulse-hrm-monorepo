@@ -13,7 +13,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, DollarSign, AlertCircle, X, FileText, Send } from 'lucide-react-native';
+import { ArrowLeft, DollarSign, AlertCircle, X, FileText, Send, CheckCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
 import { salaryService, SalaryVm, CreateComplaintRequest, ComplaintVm } from '../services/salaryService';
@@ -121,6 +121,7 @@ export default function MySalaryScreen() {
       if (result.isSuccessed) {
         Alert.alert('Thành công', 'Đã gửi khiếu nại');
         setShowComplaintModal(false);
+        // Also update status to Complaining if needed, or just reload
         loadData();
       } else {
         Alert.alert('Lỗi', result.message || 'Không thể gửi khiếu nại');
@@ -130,6 +131,32 @@ export default function MySalaryScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleConfirmSalary = async (salary: SalaryVm, isConfirmed: boolean) => {
+    Alert.alert(
+      'Xác nhận',
+      'Bạn xác nhận đã nhận đủ lương và không có thắc mắc gì?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Đồng ý',
+          onPress: async () => {
+            try {
+              const result = await salaryService.confirmSalary(salary.id, true);
+              if (result.isSuccessed) {
+                Alert.alert('Thành công', 'Đã xác nhận lương');
+                loadData();
+              } else {
+                Alert.alert('Lỗi', result.message || 'Có lỗi xảy ra');
+              }
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể xác nhận lương');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const hasComplaintForSalary = (salaryId: string) => {
@@ -173,13 +200,23 @@ export default function MySalaryScreen() {
       </View>
 
       {item.status === 'Paid' && !hasComplaintForSalary(item.id) && (
-        <TouchableOpacity 
-          style={styles.complaintBtn}
-          onPress={() => handleOpenComplaint(item)}
-        >
-          <AlertCircle size={16} color={Colors.warning} />
-          <Text style={styles.complaintBtnText}>Khiếu nại</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.confirmBtn]}
+            onPress={() => handleConfirmSalary(item, true)}
+          >
+            <CheckCircle size={16} color="white" />
+            <Text style={styles.actionBtnText}>Đồng ý</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.complainBtn]}
+            onPress={() => handleOpenComplaint(item)}
+          >
+            <AlertCircle size={16} color="white" />
+            <Text style={styles.actionBtnText}>Khiếu nại</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -272,7 +309,7 @@ export default function MySalaryScreen() {
                     {getStatusLabel(selectedSalary.status)}
                   </Text>
                 </View>
-                
+
                 <Text style={styles.detailSection}>Ngày công</Text>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Ngày công chuẩn:</Text>
@@ -709,5 +746,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: FontSize.md,
     marginLeft: Spacing.sm,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.xs,
+  },
+  confirmBtn: {
+    backgroundColor: Colors.success,
+  },
+  complainBtn: {
+    backgroundColor: Colors.warning,
+  },
+  actionBtnText: {
+    color: 'white',
+    fontSize: FontSize.sm,
+    fontWeight: '600',
   },
 });

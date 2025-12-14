@@ -4,6 +4,7 @@ using BaseSource.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using BaseSource.Shared.Helpers;
 
 namespace BaseSource.Data.Extensions
 {
@@ -16,16 +17,16 @@ namespace BaseSource.Data.Extensions
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
             
             // Check if already seeded
-            if (await context.Employees.CountAsync() > 5)
+            if (await context.Employees.CountAsync() > 50)
             {
-                Console.WriteLine("📊 Sample data already exists, skipping...");
+                Console.WriteLine("📊 Large sample data already exists, skipping...");
                 return;
             }
 
             Console.WriteLine("📊 Seeding sample data...");
             
             var hasher = new PasswordHasher<AppUser>();
-            var baseDate = new DateTime(2024, 10, 1, 0, 0, 0, DateTimeKind.Utc);
+            var baseDate = new DateTime(2024, 10, 1, 0, 0, 0, DateTimeKind.Unspecified);
             
             // Update departments to Vietnamese names
             var itDeptId = new Guid("26dd2648-8b9a-4c28-9a99-92c19f18e916");
@@ -47,32 +48,35 @@ namespace BaseSource.Data.Extensions
             await context.SaveChangesAsync();
 
             // Create sample employees with users
-            var employeeData = new List<(string id, string name, string email, string username, Guid deptId, decimal salary, string role, PositionType position)>
+            // Create sample employees with users - Generate 50 employees
+            var employeeData = new List<(string id, string name, string email, string username, Guid deptId, decimal salary, string role, PositionType position)>();
+            
+            // Managers
+            employeeData.Add(("emp-it-manager", "Nguyễn Văn An", "an.nguyen@company.com", "an.nguyen", itDeptId, 35000000, "Manager", PositionType.Manager));
+            employeeData.Add(("emp-it-deputy", "Trần Thị Bình", "binh.tran@company.com", "binh.tran", itDeptId, 28000000, "Manager", PositionType.DeputyManager));
+            employeeData.Add(("emp-hr-manager", "Võ Thanh Hùng", "hung.vo@company.com", "hung.vo", hrDeptId, 32000000, "Manager", PositionType.Manager));
+            employeeData.Add(("emp-fin-manager", "Đỗ Văn Long", "long.do@company.com", "long.do", financeDeptId, 38000000, "Manager", PositionType.Manager));
+            employeeData.Add(("emp-mkt-manager", "Lý Thị Oanh", "oanh.ly@company.com", "oanh.ly", marketingDeptId, 30000000, "Manager", PositionType.Manager));
+            employeeData.Add(("emp-ops-manager", "Đinh Minh Quân", "quan.dinh@company.com", "quan.dinh", opsDeptId, 29000000, "Manager", PositionType.Manager));
+
+            string[] firstNames = { "Tuấn", "Dũng", "Hồng", "Mai", "Lan", "Hương", "Hà", "Minh", "Đức", "Thành", "Vinh", "Khoa", "Ngọc", "Thảo", "Trang", "Linh", "Kiên", "Cường", "Hải", "Sơn" };
+            string[] lastNames = { "Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý" };
+            
+            var deptIds = new[] { itDeptId, hrDeptId, financeDeptId, marketingDeptId, opsDeptId };
+            var randomGen = new Random(123);
+
+            for (int i = 1; i <= 50; i++)
             {
-                // IT Department - Trưởng phòng + nhân viên
-                ("emp-it-manager", "Nguyễn Văn An", "an.nguyen@company.com", "an.nguyen", itDeptId, 35000000, "Manager", PositionType.Manager),
-                ("emp-it-deputy", "Trần Thị Bình", "binh.tran@company.com", "binh.tran", itDeptId, 28000000, "Manager", PositionType.DeputyManager),
-                ("emp-it-01", "Lê Hoàng Cường", "cuong.le@company.com", "cuong.le", itDeptId, 20000000, "Employee", PositionType.Senior),
-                ("emp-it-02", "Phạm Minh Đức", "duc.pham@company.com", "duc.pham", itDeptId, 18000000, "Employee", PositionType.Junior),
-                ("emp-it-03", "Hoàng Thu Hà", "ha.hoang@company.com", "ha.hoang", itDeptId, 22000000, "Employee", PositionType.Senior),
+                var deptId = deptIds[randomGen.Next(deptIds.Length)];
+                var firstName = firstNames[randomGen.Next(firstNames.Length)];
+                var lastName = lastNames[randomGen.Next(lastNames.Length)];
+                var fullName = $"{lastName} {firstName}";
+                var email = $"user{i}@company.com";
+                var username = $"user{i}";
+                var salary = 12000000 + randomGen.Next(0, 20) * 1000000;
                 
-                // HR Department
-                ("emp-hr-manager", "Võ Thanh Hùng", "hung.vo@company.com", "hung.vo", hrDeptId, 32000000, "Manager", PositionType.Manager),
-                ("emp-hr-01", "Ngô Thị Kim", "kim.ngo@company.com", "kim.ngo", hrDeptId, 17000000, "Employee", PositionType.Junior),
-                
-                // Finance Department
-                ("emp-fin-manager", "Đỗ Văn Long", "long.do@company.com", "long.do", financeDeptId, 38000000, "Manager", PositionType.Manager),
-                ("emp-fin-01", "Bùi Thị Mai", "mai.bui@company.com", "mai.bui", financeDeptId, 19000000, "Employee", PositionType.Junior),
-                ("emp-fin-02", "Dương Hoàng Nam", "nam.duong@company.com", "nam.duong", financeDeptId, 21000000, "Employee", PositionType.Senior),
-                
-                // Marketing
-                ("emp-mkt-manager", "Lý Thị Oanh", "oanh.ly@company.com", "oanh.ly", marketingDeptId, 30000000, "Manager", PositionType.Manager),
-                ("emp-mkt-01", "Trương Văn Phúc", "phuc.truong@company.com", "phuc.truong", marketingDeptId, 16000000, "Employee", PositionType.Junior),
-                
-                // Operations
-                ("emp-ops-manager", "Đinh Minh Quân", "quan.dinh@company.com", "quan.dinh", opsDeptId, 29000000, "Manager", PositionType.Manager),
-                ("emp-ops-01", "Huỳnh Thị Như", "nhu.huynh@company.com", "nhu.huynh", opsDeptId, 15000000, "Employee", PositionType.Junior),
-            };
+                employeeData.Add(($"emp-{i:000}", fullName, email, username, deptId, (decimal)salary, "Employee", PositionType.Junior));
+            }
 
             var createdEmployees = new List<Employee>();
             
@@ -149,7 +153,7 @@ namespace BaseSource.Data.Extensions
                     var daysInMonth = DateTime.DaysInMonth(2024, month);
                     for (int day = 1; day <= daysInMonth; day++)
                     {
-                        var date = new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Utc);
+                        var date = new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Unspecified);
                         if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
                             continue;
 
@@ -188,7 +192,7 @@ namespace BaseSource.Data.Extensions
                 {
                     var month = random.Next(10, 13);
                     var day = random.Next(1, 25);
-                    var startDate = new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Utc);
+                    var startDate = new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Unspecified);
                     var endDate = startDate.AddDays(random.Next(1, 4));
                     var status = statuses[random.Next(statuses.Length)];
                     
@@ -220,7 +224,7 @@ namespace BaseSource.Data.Extensions
                 {
                     var month = random.Next(10, 13);
                     var day = random.Next(1, 28);
-                    var otDate = new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Utc);
+                    var otDate = new DateTime(2024, month, day, 0, 0, 0, DateTimeKind.Unspecified);
                     if (otDate.DayOfWeek == DayOfWeek.Sunday) continue;
                     
                     var status = statuses[random.Next(statuses.Length)];

@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BaseSource.Shared.Helpers;
 
 namespace BaseSouce.Services.Services.User
 {
@@ -45,7 +46,7 @@ namespace BaseSouce.Services.Services.User
             try
             {
                 var userName = model.UserName.ToLower();
-                
+
                 // Use UserManager instead of DbContext to avoid tracking issues
                 var existingUser = await _userManager.FindByNameAsync(userName);
                 if (existingUser == null)
@@ -61,7 +62,7 @@ namespace BaseSouce.Services.Services.User
 
                 // Use CheckPasswordAsync instead of PasswordSignInAsync to avoid entity tracking issues
                 var passwordValid = await _userManager.CheckPasswordAsync(existingUser, model.Password);
-                
+
                 if (!passwordValid)
                 {
                     _logger.LogWarning("Login failed: Invalid password for user '{UserName}'", userName);
@@ -74,8 +75,8 @@ namespace BaseSouce.Services.Services.User
 
                 _logger.LogInformation("User '{UserName}' logged in successfully with role '{Role}'", userName, role);
 
-                return new ApiSuccessResult<LoginResponseVm>(new LoginResponseVm 
-                { 
+                return new ApiSuccessResult<LoginResponseVm>(new LoginResponseVm
+                {
                     Token = token,
                     Role = role
                 });
@@ -110,13 +111,13 @@ namespace BaseSouce.Services.Services.User
                     SecurityStamp = Guid.NewGuid().ToString(),
                     FullName = model.FullName ?? model.UserName,
                     IsActive = true,
-                    CreatedTime = DateTime.UtcNow,
+                    CreatedTime = TimeHelper.VietnamNow,
                     BaseSalary = model.BaseSalary,
                     DepartmentId = model.DepartmentId,
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
-                
+
                 if (!result.Succeeded)
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -130,14 +131,14 @@ namespace BaseSouce.Services.Services.User
                 var employee = new Employee
                 {
                     Id = Guid.NewGuid().ToString(),
-                    EmployeeCode = $"EMP{DateTime.UtcNow:yyyyMMddHHmmss}",
+                    EmployeeCode = $"EMP{TimeHelper.VietnamNow:yyyyMMddHHmmss}",
                     FullName = model.FullName ?? model.UserName,
                     Email = model.UserName,
                     UserId = user.Id,
                     BaseSalary = model.BaseSalary,
                     DepartmentId = model.DepartmentId,
-                    JoinDate = DateTime.UtcNow,
-                    CreatedTime = DateTime.UtcNow
+                    JoinDate = TimeHelper.VietnamNow,
+                    CreatedTime = TimeHelper.VietnamNow
                 };
 
                 _context.Employees.Add(employee);
@@ -162,7 +163,7 @@ namespace BaseSouce.Services.Services.User
 
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Code));
             var result = await _userManager.ConfirmEmailAsync(user, code);
-            
+
             return result.Succeeded
                 ? new KeyValuePair<bool, string>(true, string.Empty)
                 : new KeyValuePair<bool, string>(false, "Xác thực email thất bại!");
@@ -211,7 +212,7 @@ namespace BaseSouce.Services.Services.User
                     return new KeyValuePair<bool, string>(false, "Tài khoản không tồn tại");
 
                 var result = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
-                
+
                 if (result.Succeeded)
                 {
                     await _signInManager.SignInAsync(user, isPersistent: false);
@@ -327,15 +328,24 @@ namespace BaseSouce.Services.Services.User
                     Id = x.Id,
                     PhoneNumber = x.PhoneNumber,
                     UserName = x.UserName,
-                    IsActive = x.IsActive
+                    IsActive = x.IsActive,
+                    EmployeeId = x.Employee != null ? x.Employee.Id : null,
+                    DepartmentName = x.Department != null ? x.Department.Name : null
                 }).ToListAsync();
 
             // Get Roles for each user
             foreach (var user in data)
             {
                 var appUser = await _userManager.FindByIdAsync(user.Id);
-                var roles = await _userManager.GetRolesAsync(appUser);
-                user.Roles = roles;
+                if (appUser != null)
+                {
+                    var roles = await _userManager.GetRolesAsync(appUser);
+                    user.Roles = roles;
+                }
+                else
+                {
+                    user.Roles = new List<string>();
+                }
             }
 
             var pagedResult = new PagedResult<UserVm>()
@@ -374,7 +384,8 @@ namespace BaseSouce.Services.Services.User
                         Position = user.Position.ToString(),
                         Roles = roles.ToList(),
                         IsActive = user.IsActive,
-                        CreatedTime = user.CreatedTime
+                        CreatedTime = user.CreatedTime,
+                        EmployeeId = user.Employee?.Id
                     });
                 }
 
@@ -405,7 +416,7 @@ namespace BaseSouce.Services.Services.User
                 issuer: _configuration["Tokens:Issuer"],
                 audience: _configuration["Tokens:Issuer"],
                 claims: claims,
-                expires: DateTime.Now.AddDays(15),
+                expires: TimeHelper.VietnamNow.AddDays(15),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

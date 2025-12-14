@@ -11,6 +11,7 @@ namespace BaseSource.ViewModels.User
         public bool IsActive { get; set; }
         
         // Additional fields for department view
+        public string? EmployeeId { get; set; }
         public string? DepartmentName { get; set; }
         public string? Position { get; set; }
         public DateTime CreatedTime { get; set; }

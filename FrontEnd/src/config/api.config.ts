@@ -20,7 +20,7 @@ export const ENDPOINTS = {
   RESET_PASSWORD: '/Account/ResetPassword',
   CONFIRM_EMAIL: '/Account/ConfirmEmail',
   CHANGE_PASSWORD: '/Account/ChangePassword',
-  
+
   // User
   GET_USER_INFO: '/Account/GetUserInfo',
   GET_PROFILE: '/Account/profile',
@@ -42,7 +42,7 @@ export async function apiRequest<T>(
     });
 
     const result = await response.json();
-    
+
     // API trả về format: { isSucceeded, resultObj, message }
     if (result.isSucceeded) {
       return { success: true, data: result.resultObj };

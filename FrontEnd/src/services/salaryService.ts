@@ -56,14 +56,29 @@ export interface CreateComplaintRequest {
   salarySlipId?: string;
 }
 
+export interface CalculateSalaryRequest {
+  employeeId: string;
+  month: number;
+  year: number;
+  bonus?: number;
+  allowance?: number;
+  deductions?: number;
+  note?: string;
+}
+
 export const salaryService = {
+  calculateSalary: async (data: CalculateSalaryRequest): Promise<ApiResult<SalaryVm>> => {
+    const response = await apiClient.post('/salary/calculate', data);
+    return response.data;
+  },
+
   getMySalary: async (month?: number, year?: number): Promise<ApiResult<SalaryVm[]>> => {
     let url = '/salary/my';
     const params = [];
     if (month) params.push(`month=${month}`);
     if (year) params.push(`year=${year}`);
     if (params.length > 0) url += '?' + params.join('&');
-    
+
     const response = await apiClient.get(url);
     return response.data;
   },
@@ -93,7 +108,7 @@ export const salaryService = {
     if (departmentId) params.append('departmentId', departmentId);
     params.append('page', page.toString());
     params.append('pageSize', pageSize.toString());
-    
+
     const response = await apiClient.get(`/salary?${params}`);
     return response.data;
   },
@@ -103,14 +118,17 @@ export const salaryService = {
     return response.data;
   },
 
+  calculateSalaryPreview: async (data: CalculateSalaryRequest): Promise<ApiResult<SalaryVm>> => {
+    return await apiClient.post('/salary/preview-calculate', data);
+  },
+
   approveSalary: async (id: string): Promise<ApiResult<boolean>> => {
     const response = await apiClient.post(`/salary/${id}/approve`);
     return response.data;
   },
 
   paySalary: async (id: string, note?: string): Promise<ApiResult<boolean>> => {
-    const response = await apiClient.post(`/salary/${id}/pay`, { note });
-    return response.data;
+    return await apiClient.post(`/salary/${id}/pay`, { note });
   },
 
   // Complaint methods
@@ -131,6 +149,11 @@ export const salaryService = {
 
   resolveComplaint: async (id: string, status: number, response?: string): Promise<ApiResult<boolean>> => {
     const res = await apiClient.post(`/salary/complaints/${id}/resolve`, { status, response });
+    return res.data;
+  },
+
+  confirmSalary: async (id: string, isConfirmed: boolean, note?: string): Promise<ApiResult<boolean>> => {
+    const res = await apiClient.post(`/salary/${id}/confirm`, { isConfirmed, note });
     return res.data;
   },
 };

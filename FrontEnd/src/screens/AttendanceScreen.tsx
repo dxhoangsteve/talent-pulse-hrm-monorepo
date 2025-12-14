@@ -3,13 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, RefreshCon
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
-import { 
-  MapPin, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  MapPin,
+  Clock,
+  CheckCircle,
+  XCircle,
   ArrowLeft,
-  AlertTriangle
+  AlertTriangle,
+  Loader
 } from 'lucide-react-native';
 
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
@@ -24,6 +25,7 @@ export default function AttendanceScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
 
   const loadData = useCallback(async () => {
@@ -32,7 +34,7 @@ export default function AttendanceScreen({ navigation }: Props) {
         attendanceService.getTodayStatus(),
         attendanceService.getMyAttendance(new Date().getMonth() + 1, new Date().getFullYear())
       ]);
-      
+
       if (statusRes.isSuccessed && statusRes.resultObj) {
         setTodayStatus(statusRes.resultObj);
       }
@@ -76,18 +78,23 @@ export default function AttendanceScreen({ navigation }: Props) {
   };
 
   const handleCheckIn = async () => {
-    const location = await getCurrentLocation();
-    if (!location) return;
-
-    // Check if location is mocked
-    const isMocked = (location as any).mocked || false;
-    
-    if (isMocked) {
-      Alert.alert('Lỗi', 'Phát hiện vị trí giả! Không thể check-in.');
-      return;
-    }
-
+    setActionLoading(true);
     try {
+      const location = await getCurrentLocation();
+      if (!location) {
+        setActionLoading(false);
+        return;
+      }
+
+      // Check if location is mocked
+      const isMocked = (location as any).mocked || false;
+
+      if (isMocked) {
+        Alert.alert('Lỗi', 'Phát hiện vị trí giả! Không thể check-in.');
+        setActionLoading(false);
+        return;
+      }
+
       const result = await attendanceService.checkIn({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -103,21 +110,28 @@ export default function AttendanceScreen({ navigation }: Props) {
       }
     } catch (error) {
       Alert.alert('Lỗi', 'Có lỗi xảy ra khi check-in');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleCheckOut = async () => {
-    const location = await getCurrentLocation();
-    if (!location) return;
-
-    const isMocked = (location as any).mocked || false;
-    
-    if (isMocked) {
-      Alert.alert('Lỗi', 'Phát hiện vị trí giả! Không thể check-out.');
-      return;
-    }
-
+    setActionLoading(true);
     try {
+      const location = await getCurrentLocation();
+      if (!location) {
+        setActionLoading(false);
+        return;
+      }
+
+      const isMocked = (location as any).mocked || false;
+
+      if (isMocked) {
+        Alert.alert('Lỗi', 'Phát hiện vị trí giả! Không thể check-out.');
+        setActionLoading(false);
+        return;
+      }
+
       const result = await attendanceService.checkOut({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -133,6 +147,8 @@ export default function AttendanceScreen({ navigation }: Props) {
       }
     } catch (error) {
       Alert.alert('Lỗi', 'Có lỗi xảy ra khi check-out');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -158,7 +174,7 @@ export default function AttendanceScreen({ navigation }: Props) {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} />
@@ -167,7 +183,7 @@ export default function AttendanceScreen({ navigation }: Props) {
         {/* Today Status Card */}
         <View style={styles.statusCard}>
           <Text style={styles.statusTitle}>Hôm nay</Text>
-          
+
           <View style={styles.timeRow}>
             <View style={styles.timeBlock}>
               <Text style={styles.timeLabel}>Check-in</Text>
@@ -180,9 +196,9 @@ export default function AttendanceScreen({ navigation }: Props) {
                 <XCircle size={20} color={Colors.textSecondary} />
               )}
             </View>
-            
+
             <View style={styles.timeDivider} />
-            
+
             <View style={styles.timeBlock}>
               <Text style={styles.timeLabel}>Check-out</Text>
               <Text style={styles.timeValue}>
@@ -210,7 +226,7 @@ export default function AttendanceScreen({ navigation }: Props) {
         <View style={styles.locationCard}>
           <MapPin size={20} color={Colors.primary} />
           <Text style={styles.locationText}>
-            {currentLocation 
+            {currentLocation
               ? `Độ chính xác: ${Math.round(currentLocation.coords.accuracy || 0)}m`
               : 'Chưa lấy vị trí'
             }
@@ -222,24 +238,38 @@ export default function AttendanceScreen({ navigation }: Props) {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.checkInBtn, todayStatus?.hasCheckedIn && styles.disabledBtn]}
             onPress={handleCheckIn}
-            disabled={todayStatus?.hasCheckedIn || locationLoading}
+            disabled={todayStatus?.hasCheckedIn || locationLoading || actionLoading}
           >
-            <Text style={styles.btnText}>
-              {todayStatus?.hasCheckedIn ? 'Đã Check-in' : 'Check-in'}
-            </Text>
+            {actionLoading && !todayStatus?.hasCheckedIn ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Loader size={20} color="white" style={{ marginRight: 8 }} />
+                <Text style={styles.btnText}>Đang xử lý...</Text>
+              </View>
+            ) : (
+              <Text style={styles.btnText}>
+                {todayStatus?.hasCheckedIn ? 'Đã Check-in' : 'Check-in'}
+              </Text>
+            )}
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.checkOutBtn, (!todayStatus?.hasCheckedIn || todayStatus?.hasCheckedOut) && styles.disabledBtn]}
             onPress={handleCheckOut}
-            disabled={!todayStatus?.hasCheckedIn || todayStatus?.hasCheckedOut || locationLoading}
+            disabled={!todayStatus?.hasCheckedIn || todayStatus?.hasCheckedOut || locationLoading || actionLoading}
           >
-            <Text style={styles.btnText}>
-              {todayStatus?.hasCheckedOut ? 'Đã Check-out' : 'Check-out'}
-            </Text>
+            {actionLoading && todayStatus?.hasCheckedIn && !todayStatus?.hasCheckedOut ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Loader size={20} color="white" style={{ marginRight: 8 }} />
+                <Text style={styles.btnText}>Đang xử lý...</Text>
+              </View>
+            ) : (
+              <Text style={styles.btnText}>
+                {todayStatus?.hasCheckedOut ? 'Đã Check-out' : 'Check-out'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 

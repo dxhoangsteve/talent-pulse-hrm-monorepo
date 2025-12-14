@@ -4,6 +4,7 @@ using BaseSource.Shared.Enums;
 using BaseSource.ViewModels.Attendance;
 using BaseSource.ViewModels.Common;
 using Microsoft.EntityFrameworkCore;
+using BaseSource.Shared.Helpers;
 
 namespace BaseSource.Services.Services.Attendance
 {
@@ -11,10 +12,6 @@ namespace BaseSource.Services.Services.Attendance
     {
         private readonly BaseSourceDbContext _context;
         
-        // Vietnam timezone: UTC+7
-        private static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
-        private static DateTime VietnamNow => DateTime.UtcNow.Add(VietnamOffset);
-
         public AttendanceService(BaseSourceDbContext context)
         {
             _context = context;
@@ -39,7 +36,7 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không thể check-in với vị trí giả (mocked location)" };
                 }
 
-                var vietnamNow = VietnamNow;
+                var vietnamNow = TimeHelper.VietnamNow;
                 var today = vietnamNow.Date;
 
                 // Check if already checked in today
@@ -106,7 +103,7 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<AttendanceVm> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
                 }
 
-                var vietnamNow = VietnamNow;
+                var vietnamNow = TimeHelper.VietnamNow;
                 var today = vietnamNow.Date;
                 var attendance = await _context.Attendances
                     .FirstOrDefaultAsync(a => a.EmployeeId == employee.Id && a.Date == today);
@@ -189,7 +186,7 @@ namespace BaseSource.Services.Services.Attendance
                     return new ApiResult<TodayAttendanceVm> { IsSuccessed = false, Message = "Không tìm thấy thông tin nhân viên" };
                 }
 
-                var today = VietnamNow.Date;
+                var today = TimeHelper.VietnamNow.Date;
                 var attendance = await _context.Attendances
                     .FirstOrDefaultAsync(a => a.EmployeeId == employee.Id && a.Date == today);
 

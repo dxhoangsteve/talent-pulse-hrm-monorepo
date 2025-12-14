@@ -9,6 +9,8 @@ export interface User {
   phoneNumber: string;
   roles: string[];
   isActive: boolean;
+  employeeId?: string;
+  departmentName?: string;
 }
 
 export interface PagedResult<T> {
@@ -53,19 +55,19 @@ export const userService = {
     // Wait, Register updates "Employee" role by default. Admin might want to set roles.
     // Keeping it simple as per request to just "Add".
     const response = await fetch(`${API_CONFIG.API_URL}/Account/Register`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
     });
     const data = await response.json();
     if (!data.isSuccessed) {
-        if (data.validationErrors && data.validationErrors.length > 0) {
-            const errors = data.validationErrors.map((e: any) => e.error).join('\n');
-            throw new Error(errors);
-        }
-        throw new Error(data.message || 'Có lỗi xảy ra');
+      if (data.validationErrors && data.validationErrors.length > 0) {
+        const errors = data.validationErrors.map((e: any) => e.error).join('\n');
+        throw new Error(errors);
+      }
+      throw new Error(data.message || 'Có lỗi xảy ra');
     }
     return data;
   },
