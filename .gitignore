@@ -421,3 +421,7 @@ FodyWeavers.xsd
 *.msp
 implementation_plan.md.resolved
 BackEnd/Scripts/SeedMockData.sql
+.idea/
+
+# Agent workspace
+.agent/

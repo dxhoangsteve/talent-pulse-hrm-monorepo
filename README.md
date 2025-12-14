@@ -4,6 +4,18 @@ Hệ thống Quản lý Nhân sự & Chấm công cho doanh nghiệp vừa và n
 
 ---
 
+## Screenshots
+
+| Login | Dashboard | Check-in |
+|:-----:|:---------:|:--------:|
+| ![Login](image/Screenshot_2025-12-14-16-57-38-925_host.exp.exponent.jpg) | ![Dashboard](image/Screenshot_2025-12-14-17-32-49-155_host.exp.exponent.jpg) | ![Checkin](image/Screenshot_2025-12-14-16-57-42-212_host.exp.exponent.jpg) |
+
+| Leave Request | Salary | Settings |
+|:-------------:|:------:|:--------:|
+| ![Leave](image/Screenshot_2025-12-14-17-32-59-376_host.exp.exponent.jpg) | ![Salary](image/Screenshot_2025-12-14-17-33-03-643_host.exp.exponent.jpg) | ![Settings](image/Screenshot_2025-12-14-17-34-09-969_host.exp.exponent.jpg) |
+
+---
+
 ## Giới thiệu
 
 TalentPulse là giải pháp quản lý nhân sự (HRM) toàn diện, xây dựng trên nền tảng **monorepo** hiện đại. Dự án được phát triển với mục tiêu giải quyết các bài toán thực tế: chấm công GPS, quản lý nghỉ phép/làm thêm giờ, tính lương tự động, và phê duyệt đa cấp.
