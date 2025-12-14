@@ -1,5 +1,5 @@
 
-using BaseSource.Shared.Results;
+using BaseSource.ViewModels.Common;
 using System.Threading.Tasks;
 
 namespace BaseSource.Services.Services.Dashboard

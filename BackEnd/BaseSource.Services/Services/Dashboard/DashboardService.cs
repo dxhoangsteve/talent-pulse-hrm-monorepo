@@ -1,6 +1,6 @@
 
-using BaseSource.Data.EfDbContext;
-using BaseSource.Shared.Results;
+using BaseSource.Data.EF;
+using BaseSource.ViewModels.Common;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -27,7 +27,7 @@ namespace BaseSource.Services.Services.Dashboard
             {
                 var totalUsers = await _context.Users.CountAsync(u => !u.IsDeleted);
                 var totalDepartments = await _context.Departments.CountAsync();
-                
+
                 // Pending Leave Requests (Status = 0)
                 var pendingLeaves = await _context.LeaveRequests.CountAsync(l => l.Status == 0);
 

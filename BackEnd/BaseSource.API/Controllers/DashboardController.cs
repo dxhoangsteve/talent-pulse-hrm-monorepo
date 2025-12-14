@@ -1,6 +1,6 @@
 
 using BaseSource.Services.Services.Dashboard;
-using BaseSource.Shared.Results;
+using BaseSource.ViewModels.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
