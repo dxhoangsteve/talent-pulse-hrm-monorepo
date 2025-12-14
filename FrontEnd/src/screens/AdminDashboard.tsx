@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Colors, Spacing, FontSize, BorderRadius } from '../constants/theme';
-import { 
-  Users, 
-  Building, 
-  DollarSign, 
-  Calendar, 
+import {
+  Users,
+  Building,
+  DollarSign,
+  Calendar,
   LogOut,
   Bell,
   Menu,
@@ -18,10 +18,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/types';
 
+import { dashboardService, AdminDashboardStats } from '../services/dashboardService';
+
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminDashboard'>;
 
 export default function AdminDashboard({ navigation }: Props) {
   const { user, logout } = useAuth();
+  const [stats, setStats] = React.useState<AdminDashboardStats | null>(null);
+
+  React.useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    const result = await dashboardService.getAdminStats();
+    if (result.isSuccessed && result.resultObj) {
+      setStats(result.resultObj);
+    }
+  };
+
+  const formatMoney = (amount: number) => {
+    if (amount >= 1000000000) return (amount / 1000000000).toFixed(1) + 'B';
+    if (amount >= 1000000) return (amount / 1000000).toFixed(1) + 'M';
+    if (amount >= 1000) return (amount / 1000).toFixed(1) + 'K';
+    return amount.toString();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,28 +66,28 @@ export default function AdminDashboard({ navigation }: Props) {
         {/* Stats Grid */}
         <Text style={styles.sectionTitle}>Tổng quan</Text>
         <View style={styles.statsGrid}>
-          <StatCard 
-            title="Nhân viên" 
-            value="124" 
-            icon={<Users size={24} color="#6366F1" />} 
+          <StatCard
+            title="Nhân viên"
+            value={stats?.totalUsers.toString() || "..."}
+            icon={<Users size={24} color="#6366F1" />}
             color="#EEF2FF"
           />
-          <StatCard 
-            title="Phòng ban" 
-            value="8" 
-            icon={<Building size={24} color="#10B981" />} 
+          <StatCard
+            title="Phòng ban"
+            value={stats?.totalDepartments.toString() || "..."}
+            icon={<Building size={24} color="#10B981" />}
             color="#ECFDF5"
           />
-          <StatCard 
-            title="Đơn nghỉ" 
-            value="12" 
-            icon={<Calendar size={24} color="#F59E0B" />} 
+          <StatCard
+            title="Đơn nghỉ chờ duyệt"
+            value={stats?.pendingLeaveRequests.toString() || "0"}
+            icon={<Calendar size={24} color="#F59E0B" />}
             color="#FFFBEB"
           />
-          <StatCard 
-            title="Lương tháng" 
-            value="1.2T" 
-            icon={<DollarSign size={24} color="#EF4444" />} 
+          <StatCard
+            title="Lương đã trả (tháng)"
+            value={stats ? formatMoney(stats.totalSalaryPaidThisMonth) : "..."}
+            icon={<DollarSign size={24} color="#EF4444" />}
             color="#FEF2F2"
           />
         </View>
@@ -74,57 +95,57 @@ export default function AdminDashboard({ navigation }: Props) {
         {/* Quick Actions */}
         <Text style={styles.sectionTitle}>Quản lý</Text>
         <View style={styles.actionList}>
-          <ActionItem 
-            title="Quản lý Nhân sự" 
+          <ActionItem
+            title="Quản lý Nhân sự"
             subtitle="Thêm, sửa, xóa nhân viên"
             icon={<Users size={24} color="white" />}
             color={Colors.primary}
             onPress={() => navigation.navigate('UserManagement')}
           />
-          <ActionItem 
-            title="Chấm công & Nghỉ phép" 
+          <ActionItem
+            title="Chấm công & Nghỉ phép"
             subtitle="Phê duyệt yêu cầu"
             icon={<Calendar size={24} color="white" />}
             color={Colors.secondary}
             onPress={() => navigation.navigate('ApprovalScreen')}
           />
-          <ActionItem 
-            title="Quản lý Phòng ban" 
+          <ActionItem
+            title="Quản lý Phòng ban"
             subtitle="Thay đổi trưởng/phó phòng"
             icon={<Building size={24} color="white" />}
             color="#8B5CF6"
             onPress={() => navigation.navigate('DepartmentManagement')}
           />
-          <ActionItem 
-            title="Tính lương" 
+          <ActionItem
+            title="Tính lương"
             subtitle="Bảng lương tháng 12"
             icon={<DollarSign size={24} color="white" />}
             color={Colors.warning}
             onPress={() => navigation.navigate('SalaryHistory')}
           />
-          <ActionItem 
-            title="Lịch sử chấm công" 
+          <ActionItem
+            title="Lịch sử chấm công"
             subtitle="Xem chấm công nhân viên"
             icon={<Clock size={24} color="white" />}
             color="#10B981"
             onPress={() => navigation.navigate('AttendanceHistory')}
           />
-          <ActionItem 
-            title="Lịch sử Nghỉ phép" 
+          <ActionItem
+            title="Lịch sử Nghỉ phép"
             subtitle="Tất cả đơn nghỉ phép"
             icon={<Calendar size={24} color="white" />}
             color="#2196F3"
             onPress={() => navigation.navigate('LeaveHistory')}
           />
-          <ActionItem 
-            title="Lịch sử Tăng ca" 
+          <ActionItem
+            title="Lịch sử Tăng ca"
             subtitle="Tất cả đơn OT"
             icon={<Clock size={24} color="white" />}
             color="#FF9800"
             onPress={() => navigation.navigate('OTHistory')}
           />
-          <ActionItem 
-            title="Lịch sử Lương" 
+          <ActionItem
+            title="Lịch sử Lương"
             subtitle="Bảng lương & khiếu nại"
             icon={<DollarSign size={24} color="white" />}
             color="#4CAF50"

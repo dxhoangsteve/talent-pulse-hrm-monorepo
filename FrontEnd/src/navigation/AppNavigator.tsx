@@ -22,6 +22,7 @@ import LeaveHistoryScreen from '../screens/LeaveHistoryScreen';
 import OTHistoryScreen from '../screens/OTHistoryScreen';
 import SalaryHistoryScreen from '../screens/SalaryHistoryScreen';
 import MySalaryScreen from '../screens/MySalaryScreen';
+import DepartmentEmployeeScreen from '../screens/DepartmentEmployeeScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -63,6 +64,8 @@ export default function AppNavigator() {
             <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
             <Stack.Screen name="LeaveRequest" component={LeaveRequestScreen} />
             <Stack.Screen name="OTRequest" component={OTRequestScreen} />
+            <Stack.Screen name="MySalary" component={MySalaryScreen} />
+            <Stack.Screen name="DepartmentEmployees" component={DepartmentEmployeeScreen} />
           </>
         ) : (
           <>

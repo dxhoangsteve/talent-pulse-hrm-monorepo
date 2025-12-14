@@ -24,6 +24,7 @@ namespace BaseSource.API.Cofigurations
             services.AddTransient<IOvertimeRequestService, OvertimeRequestService>();
             services.AddTransient<IAttendanceService, AttendanceService>();
             services.AddTransient<ISalaryService, SalaryService>();
+            services.AddTransient<BaseSource.Services.Services.Dashboard.IDashboardService, BaseSource.Services.Services.Dashboard.DashboardService>();
 
             return services;
         }
